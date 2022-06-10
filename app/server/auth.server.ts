@@ -2,7 +2,7 @@ import type { Session } from "@remix-run/node"
 import { redirect } from "@remix-run/node"
 import type { UserRecord } from "firebase-admin/auth"
 
-import { destroySession, getSession } from "~/sessions"
+import { destroySession, getSession } from "~/sessions.server"
 import { auth } from "./firebase.server"
 
 export const checkSessionCookie = async (session: Session) => {

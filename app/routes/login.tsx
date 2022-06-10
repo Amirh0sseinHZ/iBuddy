@@ -9,7 +9,7 @@ import {
   signIn,
   signInWithToken,
 } from "~/server/auth.server"
-import { commitSession, getSession } from "~/sessions"
+import { commitSession, getSession } from "~/sessions.server"
 import { getRestConfig } from "~/server/firebase.server"
 
 interface LoaderData {

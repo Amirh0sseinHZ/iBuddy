@@ -3,7 +3,7 @@ import { json, redirect } from "@remix-run/node"
 import { Form, Link, useActionData } from "@remix-run/react"
 
 import { checkSessionCookie, signUp } from "~/server/auth.server"
-import { commitSession, getSession } from "~/sessions"
+import { commitSession, getSession } from "~/sessions.server"
 
 export const loader: LoaderFunction = async ({ request }) => {
   const session = await getSession(request.headers.get("cookie"))

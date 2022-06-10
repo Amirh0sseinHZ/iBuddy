@@ -4,10 +4,11 @@ export const { getSession, commitSession, destroySession } =
   createCookieSessionStorage({
     cookie: {
       name: "__session",
-      secrets: ["fancy-secret-key"],
-      maxAge: 60 * 60 * 24 * 7, // 1 week
+      maxAge: 0,
       sameSite: "lax",
       path: "/",
       httpOnly: true,
+      secrets: [process.env.SESSION_SECRET],
+      secure: process.env.NODE_ENV === "production",
     },
   })
