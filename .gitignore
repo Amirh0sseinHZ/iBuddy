@@ -10,4 +10,7 @@ firestore-debug.log
 firebase-debug.log
 ui-debug.log
 
+/cypress/screenshots
+/cypress/videos
+
 /app/styles/tailwind.css
