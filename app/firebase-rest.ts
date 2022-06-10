@@ -1,13 +1,13 @@
 interface RestError {
   error: {
-    code: number;
-    message: string;
-    errors: any[];
-  };
+    code: number
+    message: string
+    errors: any[]
+  }
 }
 
 export const isError = (input: unknown): input is RestError =>
-  !!input && typeof input === "object" && "error" in input;
+  !!input && typeof input === "object" && "error" in input
 
 // https://firebase.google.com/docs/reference/rest/auth#section-sign-in-email-password
 interface SignInWithPasswordResponse extends Response {
@@ -17,41 +17,41 @@ interface SignInWithPasswordResponse extends Response {
         /**
          * A Firebase Auth ID token for the authenticated user.
          */
-        idToken: string;
+        idToken: string
         /**
          * The email for the authenticated user.
          */
-        email: string;
+        email: string
         /**
          * A Firebase Auth refresh token for the authenticated user.
          */
-        refreshToken: string;
+        refreshToken: string
         /**
          * The number of seconds in which the ID token expires.
          */
-        expiresIn: string;
+        expiresIn: string
         /**
          * The uid of the authenticated user.
          */
-        localId: string;
+        localId: string
         /**
          * Whether the email is for an existing account.
          */
-        registered: boolean;
+        registered: boolean
       }
-  >;
+  >
 }
 
 export const signInWithPassword = async (
   body: {
-    email: string;
-    password: string;
-    returnSecureToken: true;
+    email: string
+    password: string
+    returnSecureToken: true
   },
   restConfig: {
-    apiKey: string;
-    domain: string;
-  }
+    apiKey: string
+    domain: string
+  },
 ) => {
   const response: SignInWithPasswordResponse = await fetch(
     `${restConfig!.domain}/v1/accounts:signInWithPassword?key=${
@@ -63,7 +63,7 @@ export const signInWithPassword = async (
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-    }
-  );
-  return response.json();
-};
+    },
+  )
+  return response.json()
+}
