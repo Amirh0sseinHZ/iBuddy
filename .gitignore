@@ -4,9 +4,10 @@ node_modules
 /build
 /public/build
 .env
+.history
 
 firestore-debug.log
 firebase-debug.log
 ui-debug.log
 
-.history
+/app/styles/tailwind.css
