@@ -1,24 +1,12 @@
-import type { LoaderFunction } from "@remix-run/node"
-import { redirect } from "@remix-run/node"
-import { Form } from "@remix-run/react"
+import type { ActionFunction, LoaderFunction } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 
-import { destroySession, getSession } from "~/sessions.server"
+import { logout } from "~/session.server";
 
-export const action: LoaderFunction = async ({ request }) => {
-  const session = await getSession(request.headers.get("Cookie"))
-  return redirect("/", {
-    headers: { "Set-Cookie": await destroySession(session) },
-  })
-}
+export const action: ActionFunction = async ({ request }) => {
+  return logout(request);
+};
 
-export default function Logout() {
-  return (
-    <div>
-      <h1>Logout</h1>
-      <p>Press the button below to log out.</p>
-      <Form method="post">
-        <button type="submit">Logout</button>
-      </Form>
-    </div>
-  )
-}
+export const loader: LoaderFunction = async () => {
+  return redirect("/");
+};

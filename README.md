@@ -1,66 +1,180 @@
-# Firebase Auth & Firestore
+# Remix Grunge Stack
 
-This project demonstrates how to use Firebase (Auth and Firestore) with Remix.
+![The Remix Grunge Stack](https://repository-images.githubusercontent.com/463325363/edae4f5b-1a13-47ea-b90c-c05badc2a700)
 
-## Preview
+Learn more about [Remix Stacks](https://remix.run/stacks).
 
-See the screen recording at `./screen_recording.gif` or Open this example on
-[CodeSandbox](https://codesandbox.com):
+```
+npx create-remix --template remix-run/grunge-stack
+```
 
-<!-- TODO: update this link to the path for your example: -->
+## What's in the stack
 
-[![Open in CodeSandbox](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/github/remix-run/remix/tree/main/examples/firebase-auth-firestore)
+- [AWS deployment](https://aws.com) with [Architect](https://arc.codes/)
+- Production-ready [DynamoDB Database](https://aws.amazon.com/dynamodb/)
+- [GitHub Actions](https://github.com/features/actions) for deploy on merge to
+  production and staging environments
+- Email/Password Authentication with
+  [cookie-based sessions](https://remix.run/docs/en/v1/api/remix#createcookiesessionstorage)
+- DynamoDB access via
+  [`arc.tables`](https://arc.codes/docs/en/reference/runtime-helpers/node.js#arc.tables)
+- Styling with [Tailwind](https://tailwindcss.com/)
+- End-to-end testing with [Cypress](https://cypress.io)
+- Local third party request mocking with [MSW](https://mswjs.io)
+- Unit testing with [Vitest](https://vitest.dev) and
+  [Testing Library](https://testing-library.com)
+- Code formatting with [Prettier](https://prettier.io)
+- Linting with [ESLint](https://eslint.org)
+- Static Types with [TypeScript](https://typescriptlang.org)
 
-## Example
+Not a fan of bits of the stack? Fork it, change it, and use
+`npx create-remix --template your/repo`! Make it your own.
 
-To run it, you need to either:
+## Development
 
-### 1. Run against a Firebase Project
+- Validate the app has been set up properly (optional):
 
-1. [Create a Firebase Project](https://console.firebase.google.com)
-2. Enable Auth (with email) and Firestore
-3. Add a Web App
-4. Get the
-   [admin-sdk](https://firebase.google.com/docs/admin/setup#initialize-sdk) and
-   [Web API Key](https://firebase.google.com/docs/reference/rest/auth)
-5. Save them to SERVICE_ACCOUNT and API_KEY in the `.env`-file
+  ```sh
+  npm run validate
+  ```
 
-### 2. Use the Firebase emulators
+- Start dev server:
 
-1. Run `npm run emulators` in one terminal window
-2. Run `npm run dev` in a second
+  ```sh
+  npm run dev
+  ```
 
-When the SERVICE_ACCOUNT and CLIENT_CONFIG environment variables have not been
-set, `npm run dev` will default to using the local emulator.
+This starts your app in development mode, rebuilding assets on file changes.
 
-When you run `npm run emulators`, an initial user is created with credentials
-`user@example.com:password`. This can be configured in
-`firebase-fixtures/auth/accounts.json` or via the emulator UI.
+### Relevant code:
 
-## Auth (`app/server/auth.server.ts`)
+This is a pretty simple note-taking app, but it's a good example of how you can
+build a full stack app with Architect and Remix. The main functionality is
+creating users, logging in and out, and creating and deleting notes.
 
-`signIn` returns a Firebase session-cookie-string, when sign-in is successfull.
-Then Remix `cookieSessionStorage` is used to set, read and destroy it.
+- creating users, and logging in and out
+  [./app/models/user.server.ts](./app/models/user.server.ts)
+- user sessions, and verifying them
+  [./app/session.server.ts](./app/session.server.ts)
+- creating, and deleting notes
+  [./app/models/note.server.ts](./app/models/note.server.ts)
 
-`signUp` creates a user and calls sign-in to receive the session cookie.
+The database that comes with `arc sandbox` is an in memory database, so if you
+restart the server, you'll lose your data. The Staging and Production
+environments won't behave this way, instead they'll persist the data in DynamoDB
+between deployments and Lambda executions.
 
-`requireAuth` uses `firebase-admin` to verify the session cookie. When this
-check fails, it throws a `redirect` to the login page. Use this method to
-protect loaders and actions. The returned `UserRecord` can be handy to request
-or manipulate data from the Firestore for this user.
+## Deployment
 
-## Firestore (`app/server/db.server.ts`)
+This Remix Stack comes with two GitHub Actions that handle automatically
+deploying your app to production and staging environments. By default, Arc will
+deploy to the `us-west-2` region, if you wish to deploy to a different region,
+you'll need to change your
+[`app.arc`](https://arc.codes/docs/en/reference/project-manifest/aws)
 
-Requests to the Firestore are made using the `firebase-admin`-SDK. You need to
-check validity of your requests manually, since `firestore.rules` don't apply to
-admin requests.
+Prior to your first deployment, you'll need to do a few things:
 
-`converter` and `datapoint` are utilities to allow typed Firestore data reads
-and writes.
+- Create a new [GitHub repo](https://repo.new)
 
-## Links
+- [Sign up](https://portal.aws.amazon.com/billing/signup#/start) and login to
+  your AWS account
 
-- [Firestore Data Converters](https://firebase.google.com/docs/reference/node/firebase.firestore.FirestoreDataConverter)
-  for typing
-- [Firebase Session Cookies](https://firebase.google.com/docs/auth/admin/manage-cookies)
-- [Remix `cookieSessionStorage`](https://remix.run/docs/en/v1/api/remix#createcookiesessionstorage)
+- Add `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to
+  [your GitHub repo's secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
+  Go to your AWS
+  [security credentials](https://console.aws.amazon.com/iam/home?region=us-west-2#/security_credentials)
+  and click on the "Access keys" tab, and then click "Create New Access Key",
+  then you can copy those and add them to your repo's secrets.
+
+- Along with your AWS credentials, you'll also need to give your CloudFormation
+  a `SESSION_SECRET` variable of its own for both staging and production
+  environments, as well as an `ARC_APP_SECRET` for Arc itself.
+
+  ```sh
+  npx arc env --add --env staging ARC_APP_SECRET $(openssl rand -hex 32)
+  npx arc env --add --env staging SESSION_SECRET $(openssl rand -hex 32)
+  npx arc env --add --env production ARC_APP_SECRET $(openssl rand -hex 32)
+  npx arc env --add --env production SESSION_SECRET $(openssl rand -hex 32)
+  ```
+
+  If you don't have openssl installed, you can also use
+  [1password](https://1password.com/password-generator) to generate a random
+  secret, just replace `$(openssl rand -hex 32)` with the generated secret.
+
+## Where do I find my CloudFormation?
+
+You can find the CloudFormation template that Architect generated for you in the
+sam.yaml file.
+
+To find it on AWS, you can search for
+[CloudFormation](https://console.aws.amazon.com/cloudformation/home) (make sure
+you're looking at the correct region!) and find the name of your stack (the name
+is a PascalCased version of what you have in `app.arc`, so by default it's
+RemixGrungeStackStaging and RemixGrungeStackProduction) that matches what's in
+`app.arc`, you can find all of your app's resources under the "Resources" tab.
+
+## GitHub Actions
+
+We use GitHub Actions for continuous integration and deployment. Anything that
+gets into the `main` branch will be deployed to production after running
+tests/build/etc. Anything in the `dev` branch will be deployed to staging.
+
+## Testing
+
+### Cypress
+
+We use Cypress for our End-to-End tests in this project. You'll find those in
+the `cypress` directory. As you make changes, add to an existing file or create
+a new file in the `cypress/e2e` directory to test your changes.
+
+We use [`@testing-library/cypress`](https://testing-library.com/cypress) for
+selecting elements on the page semantically.
+
+To run these tests in development, run `npm run test:e2e:dev` which will start
+the dev server for the app as well as the Cypress client. Make sure the database
+is running in docker as described above.
+
+We have a utility for testing authenticated features without having to go
+through the login flow:
+
+```ts
+cy.login()
+// you are now logged in as a new user
+```
+
+We also have a utility to auto-delete the user at the end of your test. Just
+make sure to add this in each test file:
+
+```ts
+afterEach(() => {
+  cy.cleanupUser()
+})
+```
+
+That way, we can keep your local db clean and keep your tests isolated from one
+another.
+
+### Vitest
+
+For lower level tests of utilities and individual components, we use `vitest`.
+We have DOM-specific assertion helpers via
+[`@testing-library/jest-dom`](https://testing-library.com/jest-dom).
+
+### Type Checking
+
+This project uses TypeScript. It's recommended to get TypeScript set up for your
+editor to get a really great in-editor experience with type checking and
+auto-complete. To run type checking across the whole project, run
+`npm run typecheck`.
+
+### Linting
+
+This project uses ESLint for linting. That is configured in `.eslintrc.js`.
+
+### Formatting
+
+We use [Prettier](https://prettier.io/) for auto-formatting in this project.
+It's recommended to install an editor plugin (like the
+[VSCode Prettier plugin](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode))
+to get auto-formatting on save. There's also a `npm run format` script you can
+run to format all files in the project.

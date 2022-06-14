@@ -1,6 +1,8 @@
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./app/**/*.{ts,tsx,jsx,js}"],
+  important: "body",
   theme: {
     screens: {
       xs: '300px',
@@ -9,6 +11,11 @@ module.exports = {
       lg: '976px',
       xl: '1440px',
     },
+    colors: {/* using MUI instead */ },
+  },
+  corePlugins: {
+    preflight: false,
   },
   plugins: [],
 }
+

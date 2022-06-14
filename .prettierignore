@@ -1,7 +1,10 @@
 node_modules
 
-/build
+/server/index.js
 /public/build
+preferences.arc
+sam.json
+sam.yaml
 .env
 .history
 
