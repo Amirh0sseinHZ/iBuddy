@@ -23,7 +23,12 @@ export const action: ActionFunction = async ({ request }) => {
     throw new Error("All test emails must end in @example.com")
   }
 
-  const user = await createUser(email, "myreallystrongpassword")
+  const user = await createUser({
+    email,
+    password: "myreallystrongpassword",
+    firstName: "Test",
+    lastName: "User",
+  })
 
   return createUserSession({
     request,

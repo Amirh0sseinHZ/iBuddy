@@ -1,81 +1,96 @@
-import arc from "@architect/functions";
-import bcrypt from "bcryptjs";
-import invariant from "tiny-invariant";
+import arc from "@architect/functions"
+import bcrypt from "bcryptjs"
+import invariant from "tiny-invariant"
 
-export type User = { id: `email#${string}`; email: string };
-export type Password = { password: string };
+export type User = {
+  id: `email#${string}`
+  email: string
+  firstName: string
+  lastName: string
+}
+export type Password = { password: string }
 
 export async function getUserById(id: User["id"]): Promise<User | null> {
-  const db = await arc.tables();
+  const db = await arc.tables()
   const result = await db.user.query({
     KeyConditionExpression: "pk = :pk",
     ExpressionAttributeValues: { ":pk": id },
-  });
+  })
 
-  const [record] = result.Items;
-  if (record) return { id: record.pk, email: record.email };
-  return null;
+  const [record] = result.Items
+  if (record)
+    return {
+      id: record.pk,
+      email: record.email,
+      firstName: record.firstName,
+      lastName: record.lastName,
+    }
+  return null
 }
 
 export async function getUserByEmail(email: User["email"]) {
-  return getUserById(`email#${email}`);
+  return getUserById(`email#${email}`)
 }
 
 async function getUserPasswordByEmail(email: User["email"]) {
-  const db = await arc.tables();
+  const db = await arc.tables()
   const result = await db.password.query({
     KeyConditionExpression: "pk = :pk",
     ExpressionAttributeValues: { ":pk": `email#${email}` },
-  });
+  })
 
-  const [record] = result.Items;
+  const [record] = result.Items
 
-  if (record) return { hash: record.password };
-  return null;
+  if (record) return { hash: record.password }
+  return null
 }
 
-export async function createUser(
-  email: User["email"],
-  password: Password["password"]
-) {
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const db = await arc.tables();
+export async function createUser({
+  email,
+  password,
+  firstName,
+  lastName,
+}: Omit<User, "id"> & Password) {
+  const hashedPassword = await bcrypt.hash(password, 10)
+  const db = await arc.tables()
   await db.password.put({
     pk: `email#${email}`,
     password: hashedPassword,
-  });
+  })
 
   await db.user.put({
     pk: `email#${email}`,
     email,
-  });
+    firstName,
+    lastName,
+  })
 
-  const user = await getUserByEmail(email);
-  invariant(user, `User not found after being created. This should not happen`);
+  const user = await getUserByEmail(email)
+  invariant(user, `User not found after being created. This should not happen`)
 
-  return user;
+  return user
 }
 
 export async function deleteUser(email: User["email"]) {
-  const db = await arc.tables();
-  await db.password.delete({ pk: `email#${email}` });
-  await db.user.delete({ pk: `email#${email}` });
+  const db = await arc.tables()
+  await db.password.delete({ pk: `email#${email}` })
+  await db.user.delete({ pk: `email#${email}` })
 }
 
 export async function verifyLogin(
   email: User["email"],
-  password: Password["password"]
+  password: Password["password"],
 ) {
-  const userPassword = await getUserPasswordByEmail(email);
+  const userPassword = await getUserPasswordByEmail(email)
 
   if (!userPassword) {
-    return undefined;
+    return undefined
   }
 
-  const isValid = await bcrypt.compare(password, userPassword.hash);
+  const isValid = await bcrypt.compare(password, userPassword.hash)
   if (!isValid) {
-    return undefined;
+    return undefined
   }
 
-  return getUserByEmail(email);
+  return getUserByEmail(email)
 }

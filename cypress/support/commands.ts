@@ -1,4 +1,4 @@
-import { faker } from "@faker-js/faker";
+import { faker } from "@faker-js/faker"
 
 declare global {
   namespace Cypress {
@@ -13,7 +13,7 @@ declare global {
        * @example
        *    cy.login({ email: 'whatever@example.com' })
        */
-      login: typeof login;
+      login: typeof login
     }
   }
 }
@@ -21,11 +21,11 @@ declare global {
 function login({
   email = faker.internet.email(undefined, undefined, "example.com"),
 }: {
-  email?: string;
+  email?: string
 } = {}) {
-  cy.then(() => ({ email })).as("user");
-  cy.request("POST", "/__tests/create-user", { email });
-  return cy.get("@user");
+  cy.then(() => ({ email })).as("user")
+  cy.request("POST", "/__tests/create-user", { email })
+  return cy.get("@user")
 }
 
-Cypress.Commands.add("login", login);
+Cypress.Commands.add("login", login)
