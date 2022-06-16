@@ -3,8 +3,8 @@ import { faker } from "@faker-js/faker"
 describe("smoke tests", () => {
   it("should allow you to register and login", () => {
     const loginForm = {
-      firstName: faker.name.firstName(),
-      lastName: faker.name.lastName(),
+      firstName: faker.name.firstName().replace(/[^\w\s]/gi, ""),
+      lastName: faker.name.lastName().replace(/[^\w\s]/gi, ""),
       email: `${faker.internet.userName()}@example.com`,
       password: faker.internet.password(
         undefined,
@@ -25,6 +25,7 @@ describe("smoke tests", () => {
     cy.findByRole("button", { name: /sign up/i }).click()
 
     cy.findByRole("link", { name: /notes/i, timeout: 10000 }).click()
+    cy.findByRole("user-avatar").click()
     cy.findByRole("button", { name: /logout/i }).click()
     cy.findByRole("link", { name: /log in/i })
   })
@@ -47,7 +48,6 @@ describe("smoke tests", () => {
     cy.findByRole("button", { name: /save/i }).click()
 
     cy.findByRole("button", { name: /delete/i, timeout: 10000 }).click()
-    cy.wait(500)
-    cy.findByText("No notes yet")
+    cy.findByText("No notes yet", { timeout: 10000 })
   })
 })

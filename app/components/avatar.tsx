@@ -28,5 +28,5 @@ function stringAvatar(name: string) {
 }
 
 export function BackgroundLetterAvatars({ name }: { name: string }) {
-  return <Avatar {...stringAvatar(name)} />
+  return <Avatar role="user-avatar" {...stringAvatar(name)} />
 }

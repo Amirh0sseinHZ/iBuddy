@@ -173,4 +173,3 @@ export const ResponsiveAppBar = ({ user }: Props) => {
     </AppBar>
   )
 }
-export default ResponsiveAppBar
