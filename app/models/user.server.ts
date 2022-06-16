@@ -61,8 +61,8 @@ export async function createUser({
   await db.user.put({
     pk: `email#${email}`,
     email,
-    firstName,
-    lastName,
+    firstName: firstName.trim(),
+    lastName: lastName.trim(),
   })
 
   const user = await getUserByEmail(email)

@@ -13,99 +13,113 @@ import {
   TextField,
   Typography,
   Button,
-  Stack,
   Grid,
   Checkbox,
   FormControlLabel,
+  Container,
+  Box,
+  Avatar,
 } from "@mui/material"
+import Icon from "@mdi/react"
+import { mdiLockOutline } from "@mdi/js"
 
-import { createUserSession, getUserId } from "~/session.server"
-import { validateAction } from "~/utils/validation"
 import { verifyLogin } from "~/models/user.server"
+import { createUserSession, getUserId } from "~/session.server"
+import { validateAction, Zod } from "~/utils/validation"
 import { safeRedirect } from "~/utils/redirect"
+import { useForm } from "~/components/hooks/use-form"
+import { Copyright } from "~/components/coypright"
 
 export default function Login() {
   const [searchParams] = useSearchParams()
   const redirectTo = searchParams.get("redirectTo") || "/"
   const actionData = useActionData()
   const transition = useTransition()
-  const emailError = actionData?.errors?.email
-  const passwordError = actionData?.errors?.password
   const isSubmitting = transition.state === "submitting"
 
+  const { register } = useForm(actionData?.errors)
+
   return (
-    <Grid
-      display="flex"
-      justifyContent="center"
-      flexDirection="column"
-      alignItems="center"
-      minHeight="100vh"
-      padding={2}
-    >
-      <Typography variant="h1" fontSize={24} gutterBottom>
-        Sign in
-      </Typography>
-      <Typography variant="body1" fontSize={16} classes={{ root: "mb-8" }}>
-        to continue to iBuddy
-      </Typography>
-      <Form method="post" className="w-full text-center" noValidate>
-        <Stack spacing={1.5}>
+    <Container component="main" maxWidth="xs">
+      <Box
+        sx={{
+          marginTop: 8,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
+          <Icon path={mdiLockOutline} size={1} />
+        </Avatar>
+        <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
+          Sign in
+        </Typography>
+        <Form method="post" noValidate>
+          <input type="hidden" name="redirectTo" value={redirectTo} />
           <TextField
             required
             fullWidth
             variant="outlined"
-            label="Email"
-            name="email"
-            error={!!emailError}
-            helperText={emailError}
+            margin="normal"
+            label="Email Address"
+            autoComplete="email"
+            {...register("email")}
           />
           <TextField
             required
             fullWidth
-            variant="outlined"
+            margin="normal"
             label="Password"
             type="password"
-            name="password"
-            error={!!passwordError}
-            helperText={passwordError}
+            {...register("password")}
           />
           <FormControlLabel
-            control={<Checkbox name="remember" />}
+            control={<Checkbox name="remember" color="primary" />}
             label="Remember me"
-            labelPlacement="end"
           />
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            sx={{ mt: 3, mb: 2 }}
           >
-            <Typography color="primary" align="center">
-              <Link
-                to={{
-                  pathname: "/signup",
-                  search: searchParams.toString(),
-                }}
-                style={{ color: "inherit" }}
-              >
-                Create account
-              </Link>
-            </Typography>
-            <Button variant="contained" type="submit" disabled={isSubmitting}>
-              Sign in {isSubmitting && "..."}
-            </Button>
-          </Stack>
-        </Stack>
-        <input type="hidden" name="redirectTo" value={redirectTo} />
-      </Form>
-    </Grid>
+            Sign In {isSubmitting && "..."}
+          </Button>
+          <Grid container>
+            <Grid item xs>
+              {/* Planned feature */}
+              {false && (
+                <Typography color="primary">
+                  <Link to="#" style={{ color: "inherit" }}>
+                    Forgot password?
+                  </Link>
+                </Typography>
+              )}
+            </Grid>
+            <Grid item>
+              <Typography color="primary">
+                <Link
+                  to={{
+                    pathname: "/signup",
+                    search: searchParams.toString(),
+                  }}
+                  style={{ color: "inherit" }}
+                >
+                  Don't have an account? Sign Up
+                </Link>
+              </Typography>
+            </Grid>
+          </Grid>
+        </Form>
+      </Box>
+      <Copyright sx={{ mt: 8, mb: 4 }} />
+    </Container>
   )
 }
 
 const schema = z.object({
-  email: z
-    .string({ required_error: "Email is required" })
-    .email("Invalid email address")
-    .min(1, "Email is required"),
+  email: Zod.email(),
   password: z
     .string({
       required_error: "Password is required",

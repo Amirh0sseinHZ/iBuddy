@@ -1,18 +1,17 @@
 import { Link } from "@remix-run/react"
 
 import { useOptionalUser } from "~/utils/user"
+import { ResponsiveAppBar } from "~/components/app-bar"
 
 export default function Index() {
   const user = useOptionalUser()
   return (
-    <main className="relative min-h-screen bg-white sm:flex sm:items-center sm:justify-center">
+    <main>
       {user ? (
-        <Link
-          to="/notes"
-          className="flex items-center justify-center px-4 py-3 text-base font-medium text-red-700 bg-white border border-transparent rounded-md shadow-sm hover:bg-red-50 sm:px-8"
-        >
-          View Notes for {user.email}
-        </Link>
+        <>
+          <ResponsiveAppBar user={user} />
+          <Link to="/componotes">View Notes for {user.email}</Link>
+        </>
       ) : (
         <div className="space-y-4 sm:mx-auto sm:inline-grid sm:grid-cols-2 sm:gap-5 sm:space-y-0">
           <Link
