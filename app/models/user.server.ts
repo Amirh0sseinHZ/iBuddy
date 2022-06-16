@@ -7,6 +7,7 @@ export type User = {
   email: string
   firstName: string
   lastName: string
+  fullName: string
 }
 export type Password = { password: string }
 
@@ -24,6 +25,7 @@ export async function getUserById(id: User["id"]): Promise<User | null> {
       email: record.email,
       firstName: record.firstName,
       lastName: record.lastName,
+      fullName: `${record.firstName} ${record.lastName}`,
     }
   return null
 }
@@ -50,7 +52,7 @@ export async function createUser({
   password,
   firstName,
   lastName,
-}: Omit<User, "id"> & Password) {
+}: Omit<User, "id" | "fullName"> & Password) {
   const hashedPassword = await bcrypt.hash(password, 10)
   const db = await arc.tables()
   await db.password.put({

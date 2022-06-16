@@ -20,11 +20,13 @@ import { withEmotionCache } from "@emotion/react"
 import { getUser } from "./session.server"
 
 import ClientStyleContext from "./styles/ClientStyleContext"
-import theme from "./styles/theme"
 import Layout from "./components/layout"
+import theme from "./styles/theme"
+import globalStyles from "~/styles/global.css"
 
 export const links: LinksFunction = () => {
   return [
+    { rel: "stylesheet", href: globalStyles },
     // NOTE: Architect deploys the public directory to /_static/
     { rel: "icon", href: "/_static/favicon.ico" },
   ]

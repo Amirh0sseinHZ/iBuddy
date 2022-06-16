@@ -34,7 +34,7 @@ export const action: ActionFunction = async ({ request }) => {
     request,
     userId: user.id,
     remember: true,
-    redirectTo: "/",
+    redirectTo: "/dashboard",
   })
 }
 

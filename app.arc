@@ -21,3 +21,7 @@ password
 note
   pk *String  # userId
   sk **String # noteId
+
+mentee
+  pk *String
+  sk **String # buddyId -> userId

@@ -24,7 +24,7 @@ describe("smoke tests", () => {
     cy.findByLabelText(/password/i).type(loginForm.password)
     cy.findByRole("button", { name: /sign up/i }).click()
 
-    cy.findByRole("link", { name: /notes/i, timeout: 10000 }).click()
+    cy.findByRole("link", { name: /new/i, timeout: 10000 }).click()
     cy.findByRole("user-avatar").click()
     cy.findByRole("button", { name: /logout/i }).click()
     cy.findByRole("link", { name: /log in/i })

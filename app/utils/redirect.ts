@@ -1,4 +1,6 @@
-const DEFAULT_REDIRECT = "/"
+import { useSearchParams } from "@remix-run/react"
+
+const DEFAULT_REDIRECT = "/dashboard"
 
 /**
  * This should be used any time the redirect path is user-provided
@@ -20,4 +22,9 @@ export function safeRedirect(
   }
 
   return to
+}
+
+export function useRedirectToValue() {
+  const [searchParams] = useSearchParams()
+  return searchParams.get("redirectTo") || DEFAULT_REDIRECT
 }

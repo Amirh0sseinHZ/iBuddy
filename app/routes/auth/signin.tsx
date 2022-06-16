@@ -1,5 +1,5 @@
-import type { ActionFunction, LoaderFunction } from "@remix-run/node"
-import { json, redirect } from "@remix-run/node"
+import type { ActionFunction } from "@remix-run/node"
+import { json } from "@remix-run/node"
 import {
   Form,
   Link,
@@ -24,15 +24,15 @@ import Icon from "@mdi/react"
 import { mdiLockOutline } from "@mdi/js"
 
 import { verifyLogin } from "~/models/user.server"
-import { createUserSession, getUserId } from "~/session.server"
+import { createUserSession } from "~/session.server"
 import { validateAction, Zod } from "~/utils/validation"
-import { safeRedirect } from "~/utils/redirect"
+import { safeRedirect, useRedirectToValue } from "~/utils/redirect"
 import { useForm } from "~/components/hooks/use-form"
 import { Copyright } from "~/components/coypright"
 
-export default function Login() {
+export default function SignInPage() {
   const [searchParams] = useSearchParams()
-  const redirectTo = searchParams.get("redirectTo") || "/"
+  const redirectTo = useRedirectToValue()
   const actionData = useActionData()
   const transition = useTransition()
   const isSubmitting = transition.state === "submitting"
@@ -101,7 +101,7 @@ export default function Login() {
               <Typography color="primary">
                 <Link
                   to={{
-                    pathname: "/signup",
+                    pathname: "/auth/signup",
                     search: searchParams.toString(),
                   }}
                   style={{ color: "inherit" }}
@@ -130,12 +130,6 @@ const schema = z.object({
 })
 
 type ActionInput = z.TypeOf<typeof schema>
-
-export const loader: LoaderFunction = async ({ request }) => {
-  const userId = await getUserId(request)
-  if (userId) return redirect("/")
-  return json({})
-}
 
 export const action: ActionFunction = async ({ request }) => {
   const { formData, errors } = await validateAction<ActionInput>({

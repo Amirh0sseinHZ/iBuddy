@@ -2,6 +2,8 @@ import type { ZodError, ZodSchema } from "zod"
 import * as z from "zod"
 import isAlpha from "validator/lib/isAlpha"
 import isStrongPassword from "validator/lib/isStrongPassword"
+import isDate from "validator/lib/isDate"
+import { countries } from "./country"
 
 type ActionErrors<T> = Partial<Record<keyof T, string>>
 
@@ -71,6 +73,25 @@ export const Zod = {
           }),
         `${fieldName} is too weak, it should be at least 8 characters long, contain numbers, lowercase letters, uppercase letters, and symbols`,
       ),
+
+  requiredString: (fieldName: FieldName = "Field") => {
+    const requiredMsg = getRequiredError(fieldName)
+    return z.string({ required_error: requiredMsg }).trim().min(1, requiredMsg)
+  },
+
+  dateString: (fieldName: FieldName = "Date") =>
+    z
+      .string({ required_error: getRequiredError(fieldName) })
+      .trim()
+      .min(1, getRequiredError(fieldName))
+      .refine(isDate, `${fieldName} is not a valid date`),
+
+  country: (fieldName: FieldName = "Country") =>
+    z
+      .string()
+      .trim()
+      .min(1, getRequiredError(fieldName))
+      .refine(isCountry, `${fieldName} is not a valid country`),
 }
 
 function getRequiredError(fieldName: FieldName) {
@@ -79,4 +100,10 @@ function getRequiredError(fieldName: FieldName) {
 
 function getTooLongError(fieldName: FieldName) {
   return `${fieldName} is too long`
+}
+
+const countryNames = countries.map(country => country.label)
+
+function isCountry(str: string): boolean {
+  return countryNames.includes(str)
 }
