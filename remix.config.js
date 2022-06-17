@@ -20,6 +20,11 @@ module.exports = {
         "__tests/create-user",
         path.join(__dirname, "cypress/support/test-routes/create-user.ts")
       );
+
+      route(
+        "__tests/create-mentees",
+        path.join(__dirname, "cypress/support/test-routes/create-mentees.ts")
+      );
     });
   },
   devServerPort: 8002,

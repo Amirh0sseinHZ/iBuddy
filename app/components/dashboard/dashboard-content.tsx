@@ -100,7 +100,7 @@ export function DashboardContent({ children }: Props) {
                   type="submit"
                   variant="body2"
                 >
-                  Logout
+                  Sign out
                 </Link>
               </form>
             </MenuItem>

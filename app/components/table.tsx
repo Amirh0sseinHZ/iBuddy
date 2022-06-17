@@ -11,6 +11,7 @@ import TableHead from "@mui/material/TableHead"
 import TableRow from "@mui/material/TableRow"
 import Typography from "@mui/material/Typography"
 import Paper from "@mui/material/Paper"
+import TextField from "@mui/material/TextField"
 
 import { mdiChevronDown, mdiChevronUp } from "@mdi/js"
 import Icon from "@mdi/react"
@@ -39,7 +40,7 @@ function Row({ row }: { row: any }) {
             width="20"
             src={`https://flagcdn.com/w20/${row.country?.code?.toLowerCase()}.png`}
             srcSet={`https://flagcdn.com/w40/${row.country?.code?.toLowerCase()}.png 2x`}
-            alt={row.country?.label}
+            alt="No flag found"
             title={row.country?.label}
           />
         </TableCell>
@@ -71,27 +72,48 @@ function Row({ row }: { row: any }) {
 }
 
 export function CollapsibleTable({ rows }: { rows: any[] }) {
+  const [query, setQuery] = React.useState("")
+
+  const filteredRows = rows.filter(row =>
+    row.fullName.toLowerCase().includes(query.trim().toLowerCase()),
+  )
+
   return (
-    <TableContainer component={Paper} sx={{ mt: 6 }}>
-      <Table aria-label="collapsible table">
-        <TableHead>
-          <TableRow>
-            <TableCell />
-            <TableCell>Name</TableCell>
-            <TableCell align="center">Country</TableCell>
-            <TableCell align="center">Home university</TableCell>
-            <TableCell align="center">Host faculty</TableCell>
-            <TableCell align="center">Email address</TableCell>
-            <TableCell align="center">Gender</TableCell>
-            <TableCell align="center">Degree</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map(row => (
-            <Row key={row.email} row={row} />
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <>
+      <TextField
+        autoFocus
+        type="text"
+        placeholder="Search by name..."
+        fullWidth
+        variant="filled"
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        sx={{
+          mt: 6,
+          backgroundColor: "background.grey01",
+        }}
+      />
+      <TableContainer component={Paper} sx={{ mt: 2 }}>
+        <Table aria-label="collapsible table">
+          <TableHead>
+            <TableRow>
+              <TableCell />
+              <TableCell>Name</TableCell>
+              <TableCell align="center">Country</TableCell>
+              <TableCell align="center">Home university</TableCell>
+              <TableCell align="center">Host faculty</TableCell>
+              <TableCell align="center">Email address</TableCell>
+              <TableCell align="center">Gender</TableCell>
+              <TableCell align="center">Degree</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredRows.map(row => (
+              <Row key={row.email} row={row} />
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </>
   )
 }
