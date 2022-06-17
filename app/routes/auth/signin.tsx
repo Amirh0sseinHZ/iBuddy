@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node"
+import type { ActionFunction, MetaFunction } from "@remix-run/node"
 import { json } from "@remix-run/node"
 import {
   Form,
@@ -156,4 +156,10 @@ export const action: ActionFunction = async ({ request }) => {
     remember: remember === "on",
     redirectTo,
   })
+}
+
+export const meta: MetaFunction = () => {
+  return {
+    title: "Sign In",
+  }
 }

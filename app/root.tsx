@@ -1,5 +1,4 @@
 import * as React from "react"
-import { json } from "@remix-run/node"
 import {
   Links,
   LiveReload,
@@ -9,15 +8,9 @@ import {
   ScrollRestoration,
   useCatch,
 } from "@remix-run/react"
-import type {
-  LinksFunction,
-  LoaderFunction,
-  MetaFunction,
-} from "@remix-run/node"
+import type { LinksFunction, MetaFunction } from "@remix-run/node"
 import { unstable_useEnhancedEffect as useEnhancedEffect } from "@mui/material"
 import { withEmotionCache } from "@emotion/react"
-
-import { getUser } from "./session.server"
 
 import ClientStyleContext from "./styles/ClientStyleContext"
 import Layout from "./components/layout"
@@ -34,19 +27,9 @@ export const links: LinksFunction = () => {
 
 export const meta: MetaFunction = () => ({
   charset: "utf-8",
-  title: "Remix Notes",
+  title: "iBuddy",
   viewport: "width=device-width,initial-scale=1",
 })
-
-type LoaderData = {
-  user: Awaited<ReturnType<typeof getUser>>
-}
-
-export const loader: LoaderFunction = async ({ request }) => {
-  return json<LoaderData>({
-    user: await getUser(request),
-  })
-}
 
 interface DocumentProps {
   children: React.ReactNode
