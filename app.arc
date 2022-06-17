@@ -18,10 +18,6 @@ user
 password
   pk *String # userId
 
-note
-  pk *String  # userId
-  sk **String # noteId
-
 mentee
-  pk *String
-  sk **String # buddyId -> userId
+  pk *String # buddyId -> userId
+  sk **String # menteeId
