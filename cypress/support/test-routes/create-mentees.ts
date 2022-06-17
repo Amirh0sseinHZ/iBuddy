@@ -20,6 +20,14 @@ export const action: ActionFunction = async ({ request }) => {
     throw new Error("buddyId required")
   }
 
+  const getRandomMaleOrFemale = (): "male" | "female" => {
+    return Math.random() > 0.5 ? "male" : "female"
+  }
+
+  const getRandomDegree = (): "bachelor" | "master" | "others" => {
+    return "bachelor"
+  }
+
   const mentees = []
   for (let i = 0; i < 10; i++) {
     mentees.push({
@@ -30,8 +38,8 @@ export const action: ActionFunction = async ({ request }) => {
       lastName: faker.name.lastName(),
       homeUniversity: faker.company.companyName(),
       hostFaculty: faker.company.companyName(),
-      gender: faker.name.gender(true) === "Female" ? "female" : "male",
-      degree: "bachelor",
+      gender: getRandomMaleOrFemale(),
+      degree: getRandomDegree(),
       agreementStartDate: "2022-01-01",
       agreementEndDate: "2023-01-01",
       notes: faker.lorem.paragraph(3),

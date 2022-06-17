@@ -16,7 +16,7 @@ describe("smoke tests", () => {
     cy.then(() => ({ email: loginForm.email })).as("user")
 
     cy.visit("/")
-    cy.findByRole("link", { name: /sign up/i }).click()
+    cy.findByRole("button", { name: /sign up/i }).click()
 
     cy.findByRole("textbox", { name: /first name/i }).type(loginForm.firstName)
     cy.findByRole("textbox", { name: /last name/i }).type(loginForm.lastName)
@@ -27,6 +27,6 @@ describe("smoke tests", () => {
     cy.findByRole("link", { name: /new/i, timeout: 10000 }).click()
     cy.findByRole("user-avatar").click()
     cy.findByRole("button", { name: /sign out/i }).click()
-    cy.findByRole("link", { name: /log in/i })
+    cy.findByRole("button", { name: /sign in/i })
   })
 })
