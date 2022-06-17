@@ -15,6 +15,8 @@ import TextField from "@mui/material/TextField"
 
 import { mdiChevronDown, mdiChevronUp } from "@mdi/js"
 import Icon from "@mdi/react"
+import Button from "@mui/material/Button"
+import { Form } from "@remix-run/react"
 
 function Row({ row }: { row: any }) {
   const [open, setOpen] = React.useState(false)
@@ -53,6 +55,12 @@ function Row({ row }: { row: any }) {
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
           <Collapse in={open} timeout="auto" unmountOnExit>
+            <Form method="delete">
+              <input type="hidden" name="id" value={row.id} />
+              <Button type="submit" color="error">
+                Delete
+              </Button>
+            </Form>
             <Box sx={{ margin: 1 }}>
               <Typography variant="h6" gutterBottom component="div">
                 Notes

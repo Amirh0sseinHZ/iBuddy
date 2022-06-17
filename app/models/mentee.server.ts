@@ -137,5 +137,5 @@ export async function deleteMentee({
   buddyId,
 }: Pick<Mentee, "id" | "buddyId">) {
   const db = await arc.tables()
-  return db.note.delete({ pk: buddyId, sk: idToSk(id) })
+  return db.mentee.delete({ pk: buddyId, sk: idToSk(id) })
 }
