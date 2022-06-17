@@ -1,3 +1,3 @@
 # iBuddy
 
-Welcome to iBuddy's official repo
+🔥 Welcome to iBuddy's official repo
