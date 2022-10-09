@@ -1,6 +1,6 @@
 import type { ActionFunction } from "@remix-run/node"
 import { redirect } from "@remix-run/node"
-import faker from "@faker-js/faker"
+import { faker } from "@faker-js/faker"
 
 import { createMentee } from "~/models/mentee.server"
 

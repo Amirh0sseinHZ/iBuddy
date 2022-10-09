@@ -1,4 +1,4 @@
-const path = require("path");
+const path = require("path")
 
 /**
  * @type {import('@remix-run/dev').AppConfig}
@@ -12,20 +12,17 @@ module.exports = {
   server: "./server.ts",
   ignoredRouteFiles: ["**/.*", "**/*.css", "**/*.test.{js,jsx,ts,tsx}"],
   routes(defineRoutes) {
-    return defineRoutes((route) => {
-      if (process.env.NODE_ENV === "production") return;
+    return defineRoutes(route => {
+      if (process.env.NODE_ENV === "production") return
 
-      console.log("⚠️  Test routes enabled.");
+      console.log("⚠️  Test routes enabled.")
+
+      let appDir = path.join(__dirname, "app")
+
       route(
         "__tests/create-user",
-        path.join(__dirname, "cypress/support/test-routes/create-user.ts")
-      );
-
-      route(
-        "__tests/create-mentees",
-        path.join(__dirname, "cypress/support/test-routes/create-mentees.ts")
-      );
-    });
+        path.relative(appDir, "cypress/support/test-routes/create-user.ts"),
+      )
+    })
   },
-  devServerPort: 8002,
-};
+}
