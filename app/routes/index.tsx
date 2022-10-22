@@ -60,7 +60,7 @@ export default function Index() {
                 Sign up
               </Button>
             </form>
-            <form action="/auth/signup">
+            <form action="/auth/signin">
               <Button
                 type="submit"
                 fullWidth
