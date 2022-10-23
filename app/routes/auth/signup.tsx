@@ -23,7 +23,7 @@ import { mdiAccountPlusOutline } from "@mdi/js"
 
 import { createUserSession } from "~/session.server"
 import { validateAction, Zod } from "~/utils/validation"
-import { createUser } from "~/models/user.server"
+import { createUser, hasUserWithEmail } from "~/models/user.server"
 import { safeRedirect, useRedirectToValue } from "~/utils/redirect"
 import { useForm } from "~/components/hooks/use-form"
 import { Copyright } from "~/components/coypright"
@@ -158,11 +158,20 @@ export const action: ActionFunction = async ({ request }) => {
   } = formData
   const redirectTo = safeRedirect(unsafeRedirectTo)
 
+  const isEmailTaken = await hasUserWithEmail(email)
+  if (isEmailTaken) {
+    return json(
+      { errors: { email: "This email is already taken" } },
+      { status: 400 },
+    )
+  }
+
   const user = await createUser({
     firstName,
     lastName,
     email,
     password,
+    role: "BUDDY",
   })
 
   return createUserSession({
