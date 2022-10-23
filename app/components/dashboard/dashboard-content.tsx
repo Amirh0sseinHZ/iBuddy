@@ -1,27 +1,37 @@
 import * as React from "react"
-import Box from "@mui/material/Box"
-import Toolbar from "@mui/material/Toolbar"
-import List from "@mui/material/List"
-import Typography from "@mui/material/Typography"
-import Divider from "@mui/material/Divider"
-import IconButton from "@mui/material/IconButton"
-import Container from "@mui/material/Container"
-import Grid from "@mui/material/Grid"
-import { mainListItems, secondaryListItems } from "./listItems"
 
+import type { ChipProps } from "@mui/material"
+import {
+  Box,
+  Toolbar,
+  List,
+  Chip,
+  Link,
+  Menu,
+  MenuItem,
+  Tooltip,
+  Typography,
+  Divider,
+  IconButton,
+  Container,
+  Grid,
+} from "@mui/material"
 import { mdiChevronLeft, mdiMenu } from "@mdi/js"
+
+import type { User } from "~/models/user.server"
+import { mainListItems, secondaryListItems } from "./listItems"
 import Icon from "@mdi/react"
 import { Copyright } from "../coypright"
 import { BackgroundLetterAvatars } from "../avatar"
 import { AppBar } from "./app-bar"
 import { Drawer } from "./drawer"
-import { Link, Menu, MenuItem, Tooltip } from "@mui/material"
 
 type Props = {
+  user: User
   children?: React.ReactNode
 }
 
-export function DashboardContent({ children }: Props) {
+export function DashboardContent({ children, user }: Props) {
   const [open, setOpen] = React.useState(true)
   const toggleDrawer = () => {
     setOpen(!open)
@@ -38,6 +48,15 @@ export function DashboardContent({ children }: Props) {
   const handleCloseUserMenu = () => {
     setAnchorElUser(null)
   }
+
+  const userFullName = `${user.firstName} ${user.lastName}`
+
+  const chipColor = {
+    ADMIN: "warning",
+    PRESIDENT: "error",
+    HR: "info",
+    BUDDY: "success",
+  }[user.role] as ChipProps["color"]
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -70,25 +89,51 @@ export function DashboardContent({ children }: Props) {
           </Typography>
           <Tooltip title="User menu">
             <IconButton color="inherit" onClick={handleOpenUserMenu}>
-              <BackgroundLetterAvatars name={"Amir Ziaei"} />
+              <BackgroundLetterAvatars name={userFullName} />
             </IconButton>
           </Tooltip>
           <Menu
-            sx={{ mt: "45px" }}
-            id="menu-appbar"
             anchorEl={anchorElUser}
-            anchorOrigin={{
-              vertical: "top",
-              horizontal: "right",
-            }}
-            keepMounted
-            transformOrigin={{
-              vertical: "top",
-              horizontal: "right",
-            }}
             open={Boolean(anchorElUser)}
             onClose={handleCloseUserMenu}
+            PaperProps={{
+              elevation: 0,
+              sx: {
+                overflow: "visible",
+                filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
+                mt: 1.5,
+                "& .MuiAvatar-root": {
+                  ml: -0.5,
+                  mr: 2,
+                },
+                "&:before": {
+                  content: '""',
+                  display: "block",
+                  position: "absolute",
+                  top: 0,
+                  right: 14,
+                  width: 10,
+                  height: 10,
+                  bgcolor: "background.paper",
+                  transform: "translateY(-50%) rotate(45deg)",
+                  zIndex: 0,
+                },
+              },
+            }}
+            transformOrigin={{ horizontal: "right", vertical: "top" }}
+            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           >
+            <MenuItem>
+              <BackgroundLetterAvatars
+                name={userFullName}
+                sx={{ width: 55, height: 55 }}
+              />
+              <div>
+                <Typography gutterBottom>{userFullName}</Typography>
+                <Chip size="small" label={user.role} color={chipColor} />
+              </div>
+            </MenuItem>
+            <Divider />
             <MenuItem onClick={handleCloseUserMenu}>
               <form action="/auth/signout" method="post">
                 <Link

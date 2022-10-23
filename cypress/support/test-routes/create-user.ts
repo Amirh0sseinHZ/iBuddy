@@ -28,6 +28,7 @@ export const action: ActionFunction = async ({ request }) => {
     password: "myreallystrongpassword",
     firstName: "Test",
     lastName: "User",
+    role: "ADMIN",
   })
 
   return createUserSession({

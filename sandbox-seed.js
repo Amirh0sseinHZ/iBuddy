@@ -1,19 +1,53 @@
 const bcrypt = require("bcryptjs")
+const cuid = require("cuid")
+const { faker } = require("@faker-js/faker")
 
-const testUser = {
-  pk: "email#test@test.com",
-  id: "email#test@test.com",
+const credentials = {
   email: "test@test.com",
-  firstName: "Test",
-  lastName: "User",
+  password: "test",
 }
-
-const testUserPassword = {
-  pk: testUser.pk,
-  password: bcrypt.hashSync("test", 10),
+const userId = `User#${credentials.email}`
+const testUser = {
+  user: {
+    id: userId,
+    email: credentials.email,
+    firstName: "Test",
+    lastName: "User",
+    role: "HR",
+  },
+  password: {
+    userId,
+    password: bcrypt.hashSync(credentials.password, 10),
+  },
+  mentees: Array.from({ length: 25 }, () => buildMentee()),
 }
 
 module.exports = {
-  user: [testUser],
-  password: [testUserPassword],
+  users: [testUser.user],
+  passwords: [testUser.password],
+  mentees: [...testUser.mentees],
+}
+
+function buildMentee(overrides = {}) {
+  const id = cuid()
+  const key = `Mentee#${id}`
+  const gender = faker.name.sex()
+  const firstName = faker.name.firstName(gender)
+  const lastName = faker.name.lastName(gender)
+  return {
+    pk: key,
+    sk: key,
+    id,
+    firstName,
+    lastName,
+    fullName: `${firstName} ${lastName}`,
+    gender,
+    email: faker.internet.email(firstName, lastName),
+    buddyId: userId,
+    countryCode: faker.address.countryCode(),
+    homeUniversity: faker.company.name(),
+    hostFaculty: faker.company.name(),
+    degree: faker.helpers.arrayElement(["bachelor", "master", "others"]),
+    ...overrides,
+  }
 }

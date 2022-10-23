@@ -12,12 +12,17 @@ region eu-central-1
 @static
 
 @tables
-user
+users
+  id *String
+
+passwords
+  userId *String
+
+mentees
   pk *String
+  sk **String
 
-password
-  pk *String # userId
-
-mentee
-  pk *String # buddyId -> userId
-  sk **String # menteeId
+@tables-indexes
+mentees
+  buddyId *string
+  name menteesByBuddyId

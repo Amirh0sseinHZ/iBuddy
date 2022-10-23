@@ -1,3 +1,4 @@
+import type { AvatarProps } from "@mui/material/Avatar"
 import Avatar from "@mui/material/Avatar"
 
 function stringToColor(string: string) {
@@ -27,6 +28,18 @@ function stringAvatar(name: string) {
   }
 }
 
-export function BackgroundLetterAvatars({ name }: { name: string }) {
-  return <Avatar role="user-avatar" {...stringAvatar(name)} />
+export function BackgroundLetterAvatars({
+  name,
+  sx: userProvidedSx,
+  ...rest
+}: {
+  name: string
+} & Omit<AvatarProps, "children">) {
+  const { sx: avatarSx, children } = stringAvatar(name)
+  const sx = { ...avatarSx, ...userProvidedSx }
+  return (
+    <Avatar role="user-avatar" {...rest} sx={sx}>
+      {children}
+    </Avatar>
+  )
 }

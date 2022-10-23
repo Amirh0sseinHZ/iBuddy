@@ -1,6 +1,7 @@
 import type { ActionFunction, LoaderFunction } from "@remix-run/node"
 import { json } from "@remix-run/node"
 import { useLoaderData } from "@remix-run/react"
+import invariant from "tiny-invariant"
 
 import { requireUserId } from "~/session.server"
 import type { Mentee } from "~/models/mentee.server"
@@ -14,14 +15,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const list = mentees.map(mentee => {
     const country = getCountryFromCode(mentee.countryCode)
     return {
-      id: mentee.id,
-      email: mentee.email,
-      fullName: mentee.fullName,
-      homeUniversity: mentee.homeUniversity,
-      hostFaculty: mentee.hostFaculty,
-      gender: mentee.gender,
-      degree: mentee.degree,
-      notes: mentee.notes,
+      ...mentee,
       country,
     }
   })
@@ -29,17 +23,14 @@ export const loader: LoaderFunction = async ({ request }) => {
 }
 
 export const action: ActionFunction = async ({ request }) => {
-  const userId = await requireUserId(request)
+  await requireUserId(request)
   const body = Object.fromEntries(await request.formData())
-  //@ts-ignore TODO: fix me later - didn't have enough time now
-  const { id }: Mentee["id"] = body
-  if (!id) {
-    throw new Error("No mentee id provided")
-  }
-  return deleteMentee({
-    id,
-    buddyId: userId,
-  })
+  const { id } = body as { id: Mentee["id"] }
+  invariant(id, "id is required")
+
+  // TODO: make sure they can delete this mentee
+  await deleteMentee({ id })
+  return {}
 }
 
 export default function MenteesIndexPage() {

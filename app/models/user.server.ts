@@ -3,96 +3,91 @@ import bcrypt from "bcryptjs"
 import invariant from "tiny-invariant"
 
 export type User = {
-  id: `email#${string}`
+  id: `User#${User["email"]}`
   email: string
   firstName: string
   lastName: string
-  fullName: string
+  role: "ADMIN" | "PRESIDENT" | "HR" | "BUDDY"
 }
-export type Password = { password: string }
+type UserId = User["id"]
+type UserEmail = User["email"]
+type UnsavedUser = Omit<User, "id">
+type Password = { password: string }
 
-export async function getUserById(id: User["id"]): Promise<User | null> {
+function email2UserId(email: UserEmail): UserId {
+  return `User#${email}`
+}
+
+export async function getUserById(id: UserId): Promise<User | null> {
   const db = await arc.tables()
-  const result = await db.user.query({
-    KeyConditionExpression: "pk = :pk",
-    ExpressionAttributeValues: { ":pk": id },
+  const result = await db.users.query({
+    KeyConditionExpression: "id = :id",
+    ExpressionAttributeValues: { ":id": id },
   })
-
   const [record] = result.Items
-  if (record)
-    return {
-      id: record.pk,
-      email: record.email,
-      firstName: record.firstName,
-      lastName: record.lastName,
-      fullName: `${record.firstName} ${record.lastName}`,
-    }
-  return null
+  return record ?? null
 }
 
-export async function getUserByEmail(email: User["email"]) {
-  return getUserById(`email#${email}`)
+export async function getUserByEmail(email: UserEmail) {
+  const userId = email2UserId(email)
+  return getUserById(userId)
 }
 
-async function getUserPasswordByEmail(email: User["email"]) {
+export async function hasUserWithEmail(email: UserEmail) {
+  const user = await getUserByEmail(email)
+  return user !== null
+}
+
+async function getUserPasswordByEmail(
+  email: UserEmail,
+): Promise<Password | null> {
+  const userId = email2UserId(email)
   const db = await arc.tables()
-  const result = await db.password.query({
-    KeyConditionExpression: "pk = :pk",
-    ExpressionAttributeValues: { ":pk": `email#${email}` },
+  const result = await db.passwords.query({
+    KeyConditionExpression: "userId = :userId",
+    ExpressionAttributeValues: { ":userId": userId },
   })
-
   const [record] = result.Items
-
-  if (record) return { hash: record.password }
-  return null
+  return record ?? null
 }
 
 export async function createUser({
-  email,
   password,
-  firstName,
-  lastName,
-}: Omit<User, "id" | "fullName"> & Password) {
+  email,
+  ...userProps
+}: UnsavedUser & Password) {
+  const userId = email2UserId(email)
   const hashedPassword = await bcrypt.hash(password, 10)
   const db = await arc.tables()
-  await db.password.put({
-    pk: `email#${email}`,
+  await db.passwords.put({
+    userId,
     password: hashedPassword,
   })
-
-  await db.user.put({
-    pk: `email#${email}`,
+  await db.users.put({
+    id: userId,
     email,
-    firstName: firstName.trim(),
-    lastName: lastName.trim(),
+    ...userProps,
   })
-
-  const user = await getUserByEmail(email)
+  const user = await getUserById(userId)
   invariant(user, `User not found after being created. This should not happen`)
-
   return user
 }
 
-export async function deleteUser(email: User["email"]) {
+export async function deleteUser(id: UserId): Promise<void> {
   const db = await arc.tables()
-  await db.password.delete({ pk: `email#${email}` })
-  await db.user.delete({ pk: `email#${email}` })
+  await db.passwords.delete({ userId: id })
+  await db.users.delete({ id })
 }
 
 export async function verifyLogin(
-  email: User["email"],
+  email: UserEmail,
   password: Password["password"],
-) {
+): Promise<User | null> {
   const userPassword = await getUserPasswordByEmail(email)
-
   if (!userPassword) {
-    return undefined
+    return null
   }
 
-  const isValid = await bcrypt.compare(password, userPassword.hash)
-  if (!isValid) {
-    return undefined
-  }
-
-  return getUserByEmail(email)
+  const isValid = await bcrypt.compare(password, userPassword.password)
+  return isValid ? await getUserByEmail(email) : null
 }
