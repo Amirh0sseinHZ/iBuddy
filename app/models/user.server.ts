@@ -7,6 +7,7 @@ export type User = {
   email: string
   firstName: string
   lastName: string
+  fullName: string
   role: "ADMIN" | "PRESIDENT" | "HR" | "BUDDY"
 }
 type UserId = User["id"]
@@ -24,8 +25,14 @@ export async function getUserById(id: UserId): Promise<User | null> {
     KeyConditionExpression: "id = :id",
     ExpressionAttributeValues: { ":id": id },
   })
-  const [record] = result.Items
-  return record ?? null
+  const record: User | null = result.Items[0]
+
+  if (!record) return null
+
+  return {
+    ...record,
+    fullName: `${record.firstName} ${record.lastName}`,
+  }
 }
 
 export async function getUserByEmail(email: UserEmail) {

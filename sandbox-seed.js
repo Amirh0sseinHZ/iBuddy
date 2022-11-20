@@ -19,13 +19,7 @@ const testUser = {
     userId,
     password: bcrypt.hashSync(credentials.password, 10),
   },
-  mentees: Array.from({ length: 25 }, () => buildMentee()),
-}
-
-module.exports = {
-  users: [testUser.user],
-  passwords: [testUser.password],
-  mentees: [...testUser.mentees],
+  mentees: Array.from({ length: 10 }, () => buildMentee()).flat(),
 }
 
 function buildMentee(overrides = {}) {
@@ -34,7 +28,8 @@ function buildMentee(overrides = {}) {
   const gender = faker.name.sex()
   const firstName = faker.name.firstName(gender)
   const lastName = faker.name.lastName(gender)
-  return {
+
+  const mentee = {
     pk: key,
     sk: key,
     id,
@@ -50,4 +45,34 @@ function buildMentee(overrides = {}) {
     degree: faker.helpers.arrayElement(["bachelor", "master", "others"]),
     ...overrides,
   }
+
+  const notes = Array.from(
+    { length: faker.datatype.number({ min: 0, max: 3 }) },
+    () =>
+      buildNote({
+        pk: key,
+        authorId: userId,
+      }),
+  )
+
+  return [mentee, ...notes]
 }
+
+function buildNote(overrides = {}) {
+  const id = cuid()
+  const key = `Note#${id}`
+
+  return {
+    sk: key,
+    id,
+    content: faker.lorem.paragraphs(3),
+    ...overrides,
+  }
+}
+
+const seed = {
+  users: [testUser.user],
+  passwords: [testUser.password],
+  mentees: [...testUser.mentees],
+}
+module.exports = seed
