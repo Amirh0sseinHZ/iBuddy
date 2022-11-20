@@ -12,7 +12,7 @@ export type User = {
 }
 type UserId = User["id"]
 type UserEmail = User["email"]
-type UnsavedUser = Omit<User, "id">
+type UnsavedUser = Omit<User, "id" | "fullName">
 type Password = { password: string }
 
 function email2UserId(email: UserEmail): UserId {
@@ -62,7 +62,7 @@ export async function createUser({
   password,
   email,
   ...userProps
-}: UnsavedUser & Password) {
+}: UnsavedUser & Password): Promise<User> {
   const userId = email2UserId(email)
   const hashedPassword = await bcrypt.hash(password, 10)
   const db = await arc.tables()
