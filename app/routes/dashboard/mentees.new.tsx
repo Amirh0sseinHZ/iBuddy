@@ -1,6 +1,6 @@
 import * as React from "react"
 import * as z from "zod"
-import type { ActionFunction } from "@remix-run/node"
+import type { ActionFunction, LoaderArgs } from "@remix-run/node"
 import { redirect } from "@remix-run/node"
 import { json } from "@remix-run/node"
 
@@ -25,9 +25,17 @@ import { useUser } from "~/utils/user"
 import { useForm } from "~/components/hooks/use-form"
 import { validateAction, Zod } from "~/utils/validation"
 import { createMentee, createNote } from "~/models/mentee.server"
-import { requireUserId } from "~/session.server"
+import { requireUser, requireUserId } from "~/session.server"
 import { CountrySelect } from "~/components/country-select"
 import { getCountryCodeFromName } from "~/utils/country"
+
+export async function loader({ request }: LoaderArgs) {
+  const user = await requireUser(request)
+  if (user.role === "BUDDY") {
+    return redirect("/dashboard")
+  }
+  return null
+}
 
 export default function NewMenteePage() {
   const user = useUser()

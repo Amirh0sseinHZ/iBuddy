@@ -15,12 +15,18 @@ import {
   IconButton,
   Container,
   Grid,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  ListSubheader,
 } from "@mui/material"
+import Icon from "@mdi/react"
 import { mdiChevronLeft, mdiMenu } from "@mdi/js"
+import { mdiViewDashboard, mdiAccountPlus, mdiAccountGroup } from "@mdi/js"
 
 import type { User } from "~/models/user.server"
-import { mainListItems, secondaryListItems } from "./listItems"
-import Icon from "@mdi/react"
+
+import { PendingLink } from "../link"
 import { Copyright } from "../coypright"
 import { BackgroundLetterAvatars } from "../avatar"
 import { AppBar } from "./app-bar"
@@ -167,9 +173,34 @@ export function DashboardContent({ children, user }: Props) {
         </Toolbar>
         <Divider />
         <List component="nav">
-          {mainListItems}
+          <PendingLink to="/dashboard">
+            <ListItemButton>
+              <ListItemIcon>
+                <Icon path={mdiViewDashboard} size={1} />
+              </ListItemIcon>
+              <ListItemText color="text.primary" primary="Dashboard" />
+            </ListItemButton>
+          </PendingLink>
           <Divider sx={{ my: 1 }} />
-          {secondaryListItems}
+          <ListSubheader component="div" inset>
+            Mentee management
+          </ListSubheader>
+          <PendingLink to="/dashboard/mentees">
+            <ListItemButton>
+              <ListItemIcon>
+                <Icon path={mdiAccountGroup} size={1} />
+              </ListItemIcon>
+              <ListItemText primary="Mentees" />
+            </ListItemButton>
+          </PendingLink>
+          <PendingLink to="/dashboard/mentees/new">
+            <ListItemButton>
+              <ListItemIcon>
+                <Icon path={mdiAccountPlus} size={1} />
+              </ListItemIcon>
+              <ListItemText primary="New mentee" />
+            </ListItemButton>
+          </PendingLink>
         </List>
       </Drawer>
       <Box
