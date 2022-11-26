@@ -2,13 +2,21 @@ import arc from "@architect/functions"
 import bcrypt from "bcryptjs"
 import invariant from "tiny-invariant"
 
+export enum Role {
+  "BUDDY" = "0",
+  "HR" = "1",
+  "PRESIDENT" = "2",
+  "ADMIN" = "3",
+}
+
 export type User = {
   id: `User#${User["email"]}`
   email: string
   firstName: string
   lastName: string
   fullName: string
-  role: "ADMIN" | "PRESIDENT" | "HR" | "BUDDY"
+  faculty: string
+  role: Role
 }
 type UserId = User["id"]
 type UserEmail = User["email"]
@@ -17,6 +25,16 @@ type Password = { password: string }
 
 function email2UserId(email: UserEmail): UserId {
   return `User#${email}`
+}
+
+export async function getUserListItems(): Promise<User[]> {
+  const db = await arc.tables()
+  const result = await db.users.scan({})
+
+  return result.Items.map(user => ({
+    ...user,
+    fullName: `${user.firstName} ${user.lastName}`,
+  }))
 }
 
 export async function getUserById(id: UserId): Promise<User | null> {

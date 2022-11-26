@@ -66,6 +66,21 @@ export async function getMenteeListItems({
   }))
 }
 
+export async function getMenteeCount({
+  buddyId,
+}: {
+  buddyId: Mentee["buddyId"]
+}): Promise<number> {
+  const db = await arc.tables()
+  const result = await db.mentees.query({
+    IndexName: "menteesByBuddyId",
+    KeyConditionExpression: "buddyId = :buddyId",
+    ExpressionAttributeValues: { ":buddyId": buddyId },
+    Select: "COUNT",
+  })
+  return result.Count ?? 0
+}
+
 export async function createMentee({
   buddyId,
   countryCode,

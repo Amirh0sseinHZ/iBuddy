@@ -13,7 +13,8 @@ const testUser = {
     email: credentials.email,
     firstName: "Test",
     lastName: "User",
-    role: "HR",
+    faculty: "Test Faculty",
+    role: "3", // "3" === admin
   },
   password: {
     userId,

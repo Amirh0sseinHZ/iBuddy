@@ -23,7 +23,7 @@ import { mdiAccountPlusOutline } from "@mdi/js"
 
 import { createUserSession } from "~/session.server"
 import { validateAction, Zod } from "~/utils/validation"
-import { createUser, hasUserWithEmail } from "~/models/user.server"
+import { createUser, hasUserWithEmail, Role } from "~/models/user.server"
 import { safeRedirect, useRedirectToValue } from "~/utils/redirect"
 import { useForm } from "~/components/hooks/use-form"
 import { Copyright } from "~/components/coypright"
@@ -171,7 +171,7 @@ export const action: ActionFunction = async ({ request }) => {
     lastName,
     email,
     password,
-    role: "BUDDY",
+    role: Role.BUDDY,
   })
 
   return createUserSession({

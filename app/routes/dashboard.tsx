@@ -1,13 +1,12 @@
 import * as React from "react"
 import type { LoaderArgs, MetaFunction } from "@remix-run/node"
+import { json } from "@remix-run/node"
 import { Outlet, useLoaderData } from "@remix-run/react"
 
-import type { ChipProps } from "@mui/material"
 import {
   Box,
   Toolbar,
   List,
-  Chip,
   Link,
   Menu,
   MenuItem,
@@ -33,10 +32,13 @@ import { BackgroundLetterAvatars } from "~/components/avatar"
 import { Drawer } from "~/components/dashboard/drawer"
 import { PendingLink } from "~/components/link"
 import { Copyright } from "~/components/coypright"
+import { Role } from "~/models/user.server"
+import { UserRoleChip } from "~/components/chips"
 
 export async function loader({ request }: LoaderArgs) {
   const user = await requireUser(request)
-  return user
+
+  return json({ user, isBuddy: user.role === Role.BUDDY })
 }
 
 export const meta: MetaFunction = () => {
@@ -46,7 +48,7 @@ export const meta: MetaFunction = () => {
 }
 
 export default function DashboardRoute() {
-  const user = useLoaderData<typeof loader>()
+  const { user, isBuddy } = useLoaderData<typeof loader>()
 
   const [isDrawerOpen, toggleDrawer] = React.useReducer(open => !open, true)
 
@@ -63,13 +65,6 @@ export default function DashboardRoute() {
   }
 
   const userFullName = `${user.firstName} ${user.lastName}`
-
-  const chipColor = {
-    ADMIN: "warning",
-    PRESIDENT: "error",
-    HR: "info",
-    BUDDY: "success",
-  }[user.role] as ChipProps["color"]
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -143,7 +138,7 @@ export default function DashboardRoute() {
               />
               <div>
                 <Typography gutterBottom>{userFullName}</Typography>
-                <Chip size="small" label={user.role} color={chipColor} />
+                <UserRoleChip role={user.role} />
               </div>
             </MenuItem>
             <Divider />
@@ -200,7 +195,7 @@ export default function DashboardRoute() {
               <ListItemText primary="Mentees" />
             </ListItemButton>
           </PendingLink>
-          {user.role !== "BUDDY" ? (
+          {!isBuddy ? (
             <PendingLink to="/dashboard/mentees/new">
               <ListItemButton>
                 <ListItemIcon>
@@ -211,6 +206,30 @@ export default function DashboardRoute() {
             </PendingLink>
           ) : null}
         </List>
+        {!isBuddy ? (
+          <>
+            <Divider sx={{ my: 1 }} />
+            <ListSubheader component="div" inset>
+              User management
+            </ListSubheader>
+            <PendingLink to="/dashboard/users">
+              <ListItemButton>
+                <ListItemIcon>
+                  <Icon path={mdiAccountGroup} size={1} />
+                </ListItemIcon>
+                <ListItemText primary="Users" />
+              </ListItemButton>
+            </PendingLink>
+            <PendingLink to="/dashboard/users/new">
+              <ListItemButton>
+                <ListItemIcon>
+                  <Icon path={mdiAccountPlus} size={1} />
+                </ListItemIcon>
+                <ListItemText primary="New user" />
+              </ListItemButton>
+            </PendingLink>
+          </>
+        ) : null}
         <Divider />
       </Drawer>
       <Box

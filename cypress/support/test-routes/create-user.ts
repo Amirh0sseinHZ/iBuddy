@@ -1,7 +1,7 @@
 import type { ActionFunction } from "@remix-run/node"
 import { redirect } from "@remix-run/node"
 
-import { createUser } from "~/models/user.server"
+import { createUser, Role } from "~/models/user.server"
 import { createUserSession } from "~/session.server"
 
 export const action: ActionFunction = async ({ request }) => {
@@ -28,7 +28,7 @@ export const action: ActionFunction = async ({ request }) => {
     password: "myreallystrongpassword",
     firstName: "Test",
     lastName: "User",
-    role: "ADMIN",
+    role: Role.ADMIN,
   })
 
   return createUserSession({

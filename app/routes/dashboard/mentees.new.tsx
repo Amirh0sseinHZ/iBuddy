@@ -28,10 +28,11 @@ import { createMentee, createNote } from "~/models/mentee.server"
 import { requireUser, requireUserId } from "~/session.server"
 import { CountrySelect } from "~/components/country-select"
 import { getCountryCodeFromName } from "~/utils/country"
+import { Role } from "~/models/user.server"
 
 export async function loader({ request }: LoaderArgs) {
   const user = await requireUser(request)
-  if (user.role === "BUDDY") {
+  if (user.role === Role.BUDDY) {
     return redirect("/dashboard")
   }
   return null
