@@ -33,7 +33,7 @@ export default function SignUpPage() {
   const redirectTo = useRedirectToValue()
   const actionData = useActionData()
   const transition = useTransition()
-  const isSubmitting = transition.state === "submitting"
+  const isBusy = transition.state !== "idle"
 
   const { register } = useForm(actionData?.errors)
 
@@ -101,7 +101,7 @@ export default function SignUpPage() {
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
           >
-            Sign Up {isSubmitting && "..."}
+            Sign Up {isBusy && "..."}
           </Button>
           <Grid container justifyContent="flex-end">
             <Grid item>
