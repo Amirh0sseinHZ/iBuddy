@@ -22,7 +22,6 @@ export function useBuddyList(): { list: User[]; isLoading: boolean } {
   const fetcher = useFetcher()
 
   const { data: buddies } = fetcher as { data: User[] | undefined }
-  console.log("🚀 ~ useBuddyList ~ buddies", buddies)
 
   React.useEffect(() => {
     if (fetcher.type === "init") {

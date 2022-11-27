@@ -1,19 +1,12 @@
 import type { ActionFunction, MetaFunction } from "@remix-run/node"
 import { json } from "@remix-run/node"
-import {
-  Form,
-  Link,
-  useActionData,
-  useSearchParams,
-  useTransition,
-} from "@remix-run/react"
+import { Form, Link, useActionData, useTransition } from "@remix-run/react"
 import * as z from "zod"
 
 import {
   TextField,
   Typography,
   Button,
-  Grid,
   Checkbox,
   FormControlLabel,
   Container,
@@ -31,7 +24,6 @@ import { useForm } from "~/components/hooks/use-form"
 import { Copyright } from "~/components/coypright"
 
 export default function SignInPage() {
-  const [searchParams] = useSearchParams()
   const redirectTo = useRedirectToValue()
   const actionData = useActionData()
   const transition = useTransition()
@@ -87,31 +79,14 @@ export default function SignInPage() {
           >
             Sign In {isBusy && "..."}
           </Button>
-          <Grid container>
-            <Grid item xs>
-              {/* TODO: Planned feature */}
-              {false && (
-                <Typography color="primary">
-                  <Link to="#" style={{ color: "inherit" }}>
-                    Forgot password?
-                  </Link>
-                </Typography>
-              )}
-            </Grid>
-            <Grid item>
-              <Typography color="primary">
-                <Link
-                  to={{
-                    pathname: "/auth/signup",
-                    search: searchParams.toString(),
-                  }}
-                  style={{ color: "inherit" }}
-                >
-                  Don't have an account? Sign Up
-                </Link>
-              </Typography>
-            </Grid>
-          </Grid>
+          {/* TODO: Planned feature */}
+          {false && (
+            <Typography color="primary">
+              <Link to="#" style={{ color: "inherit" }}>
+                Forgot password?
+              </Link>
+            </Typography>
+          )}
         </Form>
       </Box>
       <Copyright sx={{ mt: 8, mb: 4 }} />

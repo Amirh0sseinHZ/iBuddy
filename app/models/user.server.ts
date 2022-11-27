@@ -24,7 +24,7 @@ export interface User extends Contractor {
 type UserId = User["id"]
 type UserEmail = User["email"]
 type UnsavedUser = Omit<User, "id">
-type Password = { password: string }
+export type Password = { password: string }
 
 function email2UserId(email: UserEmail): UserId {
   return `User#${email}`

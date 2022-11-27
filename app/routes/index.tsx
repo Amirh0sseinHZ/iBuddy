@@ -26,7 +26,7 @@ export default function Index() {
         md={7}
         sx={{
           backgroundImage:
-            "url(https://source.unsplash.com/random/?technology)",
+            "url(https://images.unsplash.com/photo-1567023249914-7c83f04de30c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80)",
           backgroundRepeat: "no-repeat",
           backgroundColor: t =>
             t.palette.mode === "light"
@@ -49,17 +49,7 @@ export default function Index() {
           <Typography component="h1" variant="h5">
             Heya!
           </Typography>
-          <Box sx={{ mt: 1 }}>
-            <form action="/auth/signup">
-              <Button
-                type="submit"
-                fullWidth
-                variant="outlined"
-                sx={{ mt: 3, mb: 2 }}
-              >
-                Sign up
-              </Button>
-            </form>
+          <Box sx={{ mt: 2 }}>
             <form action="/auth/signin">
               <Button
                 type="submit"
@@ -70,7 +60,7 @@ export default function Index() {
                 Sign In
               </Button>
             </form>
-            <Copyright sx={{ mt: 5 }} />
+            <Copyright sx={{ mt: 2 }} />
           </Box>
         </Box>
       </Grid>
