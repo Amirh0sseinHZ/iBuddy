@@ -29,6 +29,9 @@ export const action: ActionFunction = async ({ request }) => {
     firstName: "Test",
     lastName: "User",
     role: Role.ADMIN,
+    agreementStartDate: "2022-11-27T16:07:26.636Z",
+    agreementEndDate: "2045-02-27T06:03:18.693Z",
+    faculty: "Test Faculty",
   })
 
   return createUserSession({

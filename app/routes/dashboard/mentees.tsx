@@ -38,9 +38,10 @@ export default function MenteesIndexPage() {
   const [query, setQuery] = React.useState("")
   const { menteeId } = useParams()
 
-  const filteredMentees = mentees.filter(mentee =>
-    mentee.fullName.toLowerCase().includes(query.trim().toLowerCase()),
-  )
+  const filteredMentees = mentees.filter(mentee => {
+    const fullName = `${mentee.firstName} ${mentee.lastName}`
+    return fullName.toLowerCase().includes(query.trim().toLowerCase())
+  })
 
   return (
     <>
@@ -94,7 +95,7 @@ export default function MenteesIndexPage() {
                         </NavLink>
                       </TableCell>
                       <TableCell component="th" scope="row">
-                        {mentee.fullName}
+                        {`${mentee.firstName} ${mentee.lastName}`}
                       </TableCell>
                       <TableCell align="center">
                         <img

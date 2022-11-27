@@ -3,6 +3,7 @@ import * as z from "zod"
 import type { ActionFunction, LoaderArgs } from "@remix-run/node"
 import { redirect } from "@remix-run/node"
 import { json } from "@remix-run/node"
+import invariant from "tiny-invariant"
 
 import {
   Box,
@@ -21,14 +22,14 @@ import {
 } from "@mui/material"
 import { Form, useActionData, useTransition } from "@remix-run/react"
 
-import { useUser } from "~/utils/user"
 import { useForm } from "~/components/hooks/use-form"
 import { validateAction, Zod } from "~/utils/validation"
 import { createMentee, createNote } from "~/models/mentee.server"
 import { requireUser, requireUserId } from "~/session.server"
 import { CountrySelect } from "~/components/country-select"
 import { getCountryCodeFromName } from "~/utils/country"
-import { Role } from "~/models/user.server"
+import { getBuddyByEmail, Role } from "~/models/user.server"
+import { useBuddyList } from "../resources/buddies"
 
 export async function loader({ request }: LoaderArgs) {
   const user = await requireUser(request)
@@ -38,12 +39,92 @@ export async function loader({ request }: LoaderArgs) {
   return null
 }
 
+const schema = z
+  .object({
+    firstName: Zod.name("First name"),
+    lastName: Zod.name("Last name"),
+    country: Zod.country(),
+    email: Zod.email(),
+    homeUniversity: Zod.requiredString("Home university"),
+    hostFaculty: Zod.requiredString("Home faculty"),
+    agreementStartDate: Zod.dateString("Start date"),
+    agreementEndDate: Zod.dateString("End date"),
+    notes: z.string().max(2000, "Note cannot be too long").optional(),
+    degree: z.enum(["bachelor", "master", "others"]),
+    gender: z.enum(["male", "female"]),
+    buddyEmail: Zod.email(),
+  })
+  .and(
+    z
+      .object({
+        agreementStartDate: z.string(),
+        agreementEndDate: z.string(),
+      })
+      .refine(
+        ({ agreementStartDate, agreementEndDate }) => {
+          if (!agreementStartDate || !agreementEndDate) {
+            return true
+          }
+          const startDate = new Date(agreementStartDate)
+          const endDate = new Date(agreementEndDate)
+          const today = new Date()
+          // end date should not be in the past
+          // start date can be both in past and future
+          // end date should not be before the start date
+          return endDate > today && endDate >= startDate
+        },
+        {
+          message: "End date must be in the future and after the start date",
+          path: ["agreementEndDate"],
+        },
+      ),
+  )
+
+type ActionInput = z.TypeOf<typeof schema>
+
+export const action: ActionFunction = async ({ request }) => {
+  const user = await requireUser(request)
+  invariant(user.role !== Role.BUDDY, "Forbidden")
+
+  const { formData, errors } = await validateAction<ActionInput>({
+    request,
+    schema,
+  })
+  if (errors) {
+    return json({ errors }, { status: 400 })
+  }
+
+  const { country, notes, buddyEmail, ...restOfForm } = formData
+  const countryCode = getCountryCodeFromName(country)
+  if (!countryCode) {
+    return json({ errors: { country: "Invalid country" } }, { status: 400 })
+  }
+
+  // check if buddy exists
+  const buddy = await getBuddyByEmail(buddyEmail)
+  invariant(buddy, "Buddy does not exist")
+
+  const mentee = await createMentee({
+    ...restOfForm,
+    countryCode,
+    buddyId: buddy.id,
+  })
+
+  if (notes) {
+    await createNote({
+      menteeId: mentee.id,
+      content: notes,
+    })
+  }
+  return redirect("/dashboard/mentees")
+}
+
 export default function NewMenteePage() {
-  const user = useUser()
+  const { list: buddyList, isLoading: isBuddyListLoading } = useBuddyList()
   const actionData = useActionData()
   const { register } = useForm(actionData?.errors)
   const transition = useTransition()
-  const isSubmitting = transition.state === "submitting"
+  const isBusy = transition.state !== "idle"
 
   const [gender, setGender] = React.useState("male")
   const [degree, setDegree] = React.useState("bachelor")
@@ -196,10 +277,18 @@ export default function NewMenteePage() {
                 />
               </Grid>
               <Grid item xs={12}>
-                <FormControl disabled fullWidth required>
+                <FormControl disabled={isBuddyListLoading} fullWidth required>
                   <InputLabel id="buddy-select-label">Buddy</InputLabel>
-                  <Select value={0} labelId="buddy-select-label" label="Buddy">
-                    <MenuItem value={0}>{user.fullName}</MenuItem>
+                  <Select
+                    labelId="buddy-select-label"
+                    label="Buddy"
+                    {...register("buddyEmail")}
+                  >
+                    {buddyList.map(buddy => (
+                      <MenuItem key={buddy.id} value={buddy.email}>
+                        {`${buddy.firstName} ${buddy.lastName}`}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Grid>
@@ -218,85 +307,13 @@ export default function NewMenteePage() {
               type="submit"
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
+              disabled={isBusy}
             >
-              Register {isSubmitting && "..."}
+              Register {isBusy && "..."}
             </Button>
           </Form>
         </Box>
       </Paper>
     </Box>
   )
-}
-
-const schema = z
-  .object({
-    firstName: Zod.name("First name"),
-    lastName: Zod.name("Last name"),
-    country: Zod.country(),
-    email: Zod.email(),
-    homeUniversity: Zod.requiredString("Home university"),
-    hostFaculty: Zod.requiredString("Home faculty"),
-    agreementStartDate: Zod.dateString("Start date"),
-    agreementEndDate: Zod.dateString("End date"),
-    notes: z.string().max(2000, "Note cannot be too long").optional(),
-    degree: z.enum(["bachelor", "master", "others"]),
-    gender: z.enum(["male", "female"]),
-  })
-  .and(
-    z
-      .object({
-        agreementStartDate: z.string(),
-        agreementEndDate: z.string(),
-      })
-      .refine(
-        ({ agreementStartDate, agreementEndDate }) => {
-          if (!agreementStartDate || !agreementEndDate) {
-            return true
-          }
-          const startDate = new Date(agreementStartDate)
-          const endDate = new Date(agreementEndDate)
-          const today = new Date()
-          // end date should not be in the past
-          // start date can be both in past and future
-          // end date should not be before the start date
-          return endDate > today && endDate >= startDate
-        },
-        {
-          message: "End date must be in the future and after the start date",
-          path: ["agreementEndDate"],
-        },
-      ),
-  )
-
-type ActionInput = z.TypeOf<typeof schema>
-
-export const action: ActionFunction = async ({ request }) => {
-  const userId = await requireUserId(request)
-  const { formData, errors } = await validateAction<ActionInput>({
-    request,
-    schema,
-  })
-  if (errors) {
-    return json({ errors }, { status: 400 })
-  }
-
-  const { country, notes, ...restOfForm } = formData
-  const countryCode = getCountryCodeFromName(country)
-  if (!countryCode) {
-    return json({ errors: { country: "Invalid country" } }, { status: 400 })
-  }
-
-  const mentee = await createMentee({
-    ...restOfForm,
-    countryCode,
-    buddyId: userId,
-  })
-
-  if (notes) {
-    await createNote({
-      menteeId: mentee.id,
-      content: notes,
-    })
-  }
-  return redirect("/dashboard/mentees")
 }

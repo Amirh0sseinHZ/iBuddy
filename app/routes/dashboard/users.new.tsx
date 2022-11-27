@@ -230,6 +230,7 @@ export default function NewUserPage() {
               type="submit"
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
+              disabled={isBusy}
             >
               Register {isBusy && "..."}
             </Button>

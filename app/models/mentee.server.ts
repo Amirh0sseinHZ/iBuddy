@@ -5,7 +5,7 @@ import invariant from "tiny-invariant"
 import type { CountryType } from "~/utils/country"
 import type { User } from "./user.server"
 
-export type Mentee = Omit<User, "id" | "role"> & {
+export type Mentee = Omit<User, "id" | "role" | "faculty"> & {
   id: ReturnType<typeof cuid>
   buddyId: User["id"]
   countryCode: CountryType["code"]
@@ -13,8 +13,6 @@ export type Mentee = Omit<User, "id" | "role"> & {
   hostFaculty: string
   gender: "male" | "female"
   degree: "bachelor" | "master" | "others"
-  agreementStartDate: string
-  agreementEndDate: string
 }
 
 type MenteeItem = {
@@ -59,11 +57,7 @@ export async function getMenteeListItems({
     KeyConditionExpression: "buddyId = :buddyId",
     ExpressionAttributeValues: { ":buddyId": buddyId },
   })
-
-  return result.Items.map(mentee => ({
-    ...mentee,
-    fullName: `${mentee.firstName} ${mentee.lastName}`,
-  }))
+  return result.Items
 }
 
 export async function getMenteeCount({
@@ -93,7 +87,7 @@ export async function createMentee({
   degree,
   agreementStartDate,
   agreementEndDate,
-}: Omit<Mentee, "id" | "fullName">): Promise<Mentee> {
+}: Omit<Mentee, "id">): Promise<Mentee> {
   const id = cuid()
   const key = id2pk(id)
   const db = await arc.tables()

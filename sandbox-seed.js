@@ -15,6 +15,8 @@ const testUser = {
     lastName: "User",
     faculty: "Test Faculty",
     role: "3", // "3" === admin
+    agreementStartDate: faker.date.recent().toISOString(),
+    agreementEndDate: faker.date.soon(180).toISOString(),
   },
   password: {
     userId,
@@ -36,7 +38,6 @@ function buildMentee(overrides = {}) {
     id,
     firstName,
     lastName,
-    fullName: `${firstName} ${lastName}`,
     gender,
     email: faker.internet.email(firstName, lastName),
     buddyId: userId,

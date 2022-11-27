@@ -18,7 +18,6 @@ import { getUserListItems, Role } from "~/models/user.server"
 import { UserRoleChip } from "~/components/chips"
 import { getMenteeCount } from "~/models/mentee.server"
 import { PendingLink } from "~/components/link"
-import { Typography } from "@mui/material"
 
 export async function loader({ request }: LoaderArgs) {
   const user = await requireUser(request)
@@ -41,9 +40,10 @@ export default function UsersIndexPage() {
   const { usersAndMenteeCounts } = useLoaderData<typeof loader>()
   const [query, setQuery] = React.useState("")
 
-  const filteredUsers = usersAndMenteeCounts.filter(user =>
-    user.fullName.toLowerCase().includes(query.trim().toLowerCase()),
-  )
+  const filteredUsers = usersAndMenteeCounts.filter(user => {
+    const fullName = `${user.firstName} ${user.lastName}`
+    return fullName.toLowerCase().includes(query.trim().toLowerCase())
+  })
 
   return (
     <>
@@ -88,7 +88,7 @@ export default function UsersIndexPage() {
                         sx={{ textDecoration: "underline" }}
                       >
                         <PendingLink to={`/dashboard/users/${user.id}`}>
-                          {user.fullName}
+                          {`${user.firstName} ${user.lastName}`}
                         </PendingLink>
                       </TableCell>
                       <TableCell align="center">{user.email}</TableCell>

@@ -9,18 +9,21 @@ export enum Role {
   "ADMIN" = "3",
 }
 
-export type User = {
+interface Contractor {
+  agreementStartDate: string
+  agreementEndDate: string
+}
+export interface User extends Contractor {
   id: `User#${User["email"]}`
   email: string
   firstName: string
   lastName: string
-  fullName: string
   faculty: string
   role: Role
 }
 type UserId = User["id"]
 type UserEmail = User["email"]
-type UnsavedUser = Omit<User, "id" | "fullName">
+type UnsavedUser = Omit<User, "id">
 type Password = { password: string }
 
 function email2UserId(email: UserEmail): UserId {
@@ -30,11 +33,7 @@ function email2UserId(email: UserEmail): UserId {
 export async function getUserListItems(): Promise<User[]> {
   const db = await arc.tables()
   const result = await db.users.scan({})
-
-  return result.Items.map(user => ({
-    ...user,
-    fullName: `${user.firstName} ${user.lastName}`,
-  }))
+  return result.Items
 }
 
 export async function getUserById(id: UserId): Promise<User | null> {
@@ -44,13 +43,7 @@ export async function getUserById(id: UserId): Promise<User | null> {
     ExpressionAttributeValues: { ":id": id },
   })
   const record: User | null = result.Items[0]
-
-  if (!record) return null
-
-  return {
-    ...record,
-    fullName: `${record.firstName} ${record.lastName}`,
-  }
+  return record
 }
 
 export async function getUserByEmail(email: UserEmail) {
@@ -115,4 +108,15 @@ export async function verifyLogin(
 
   const isValid = await bcrypt.compare(password, userPassword.password)
   return isValid ? await getUserByEmail(email) : null
+}
+
+export async function getBuddyByEmail(
+  email: User["email"],
+): Promise<User | null> {
+  const buddy = await getUserByEmail(email)
+  if (!buddy) {
+    return null
+  }
+  const isBuddyActive = new Date(buddy.agreementEndDate) > new Date()
+  return isBuddyActive ? buddy : null
 }
