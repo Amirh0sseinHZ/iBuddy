@@ -68,6 +68,7 @@ function buildNote(overrides = {}) {
     sk: key,
     id,
     content: faker.lorem.paragraphs(3),
+    createdAt: faker.date.recent().toISOString(),
     ...overrides,
   }
 }

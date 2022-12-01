@@ -16,13 +16,16 @@ import TextField from "@mui/material/TextField"
 import { mdiChevronDown, mdiChevronUp } from "@mdi/js"
 import Icon from "@mdi/react"
 
-import { requireUserId } from "~/session.server"
+import { requireUser } from "~/session.server"
 import { getCountryFromCode } from "~/utils/country"
-import { getMenteeListItems } from "~/models/mentee.server"
+import { getAllMentees, getMenteeListItems } from "~/models/mentee.server"
+import { Role } from "~/models/user.server"
 
 export async function loader({ request }: LoaderArgs) {
-  const userId = await requireUserId(request)
-  const mentees = await getMenteeListItems({ buddyId: userId })
+  const user = await requireUser(request)
+  const mentees = await (user.role === Role.BUDDY
+    ? getMenteeListItems({ buddyId: user.id })
+    : getAllMentees())
   const list = mentees.map(mentee => {
     const country = getCountryFromCode(mentee.countryCode)
     return {

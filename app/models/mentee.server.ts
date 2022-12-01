@@ -4,6 +4,7 @@ import invariant from "tiny-invariant"
 
 import type { CountryType } from "~/utils/country"
 import type { User } from "./user.server"
+import { Role } from "./user.server"
 
 export type Mentee = Omit<User, "id" | "role" | "faculty"> & {
   id: ReturnType<typeof cuid>
@@ -17,20 +18,26 @@ export type Mentee = Omit<User, "id" | "role" | "faculty"> & {
 
 type MenteeItem = {
   pk: `Mentee#${Mentee["id"]}`
-  sk: MenteeItem["pk"] | NoteSk
+  sk: MenteeItem["pk"] | NoteItem["sk"]
 }
 
-type NoteSk = `Note#${Note["id"]}`
+type NoteItem = {
+  pk: MenteeItem["pk"]
+  sk: `Note#${Note["id"]}`
+}
 
 const id2pk = (id: Mentee["id"]): MenteeItem["pk"] => `Mentee#${id}`
-const id2NoteSk = (id: Note["id"]): NoteSk => `Note#${id}`
+const id2NoteSk = (id: Note["id"]): NoteItem["sk"] => `Note#${id}`
 
-type Note = {
+export type Note = {
   id: ReturnType<typeof cuid>
   content: string
+  authorId: User["id"]
   createdAt: string
-  updatedAt: string
+  updatedAt?: string
 }
+
+type NewNote = NoteItem & Note
 
 export async function getMenteeById(id: Mentee["id"]): Promise<Mentee | null> {
   const key = id2pk(id)
@@ -44,6 +51,17 @@ export async function getMenteeById(id: Mentee["id"]): Promise<Mentee | null> {
   })
   const record: Mentee | null = result.Items[0]
   return record
+}
+
+export async function getAllMentees(): Promise<Mentee[]> {
+  const db = await arc.tables()
+  const result = await db.mentees.scan({
+    FilterExpression: "begins_with(sk, :sk)",
+    ExpressionAttributeValues: {
+      ":sk": "Mentee#",
+    },
+  })
+  return result.Items
 }
 
 export async function getMenteeListItems({
@@ -141,19 +159,61 @@ export async function getNotesOfMentee(
 export async function createNote({
   menteeId,
   content,
+  authorId,
 }: {
   menteeId: Mentee["id"]
   content: Note["content"]
+  authorId: Note["authorId"]
 }): Promise<Note> {
   const id = cuid()
   const db = await arc.tables()
-  const result = await db.mentees.put({
+  const newNote: NewNote = {
     pk: id2pk(menteeId),
     sk: id2NoteSk(id),
     id,
     content,
-  })
+    authorId,
+    createdAt: new Date().toISOString(),
+  }
+  const result = await db.mentees.put(newNote)
   return result
+}
+
+export async function getNote({
+  menteeId,
+  noteId,
+}: {
+  menteeId: Mentee["id"]
+  noteId: Note["id"]
+}): Promise<Note | null> {
+  const db = await arc.tables()
+  return db.mentees.get({
+    pk: id2pk(menteeId),
+    sk: id2NoteSk(noteId),
+  })
+}
+
+export async function updateNote({
+  menteeId,
+  noteId,
+  content,
+}: {
+  menteeId: Mentee["id"]
+  noteId: Note["id"]
+  content: Note["content"]
+}): Promise<void> {
+  const db = await arc.tables()
+  const res = await db.mentees.update({
+    Key: {
+      pk: id2pk(menteeId),
+      sk: id2NoteSk(noteId),
+    },
+    UpdateExpression: "set content = :content, updatedAt = :updatedAt",
+    ExpressionAttributeValues: {
+      ":content": content,
+      ":updatedAt": new Date().toISOString(),
+    },
+  })
 }
 
 export async function deleteNote({
@@ -168,4 +228,12 @@ export async function deleteNote({
     pk: id2pk(menteeId),
     sk: id2NoteSk(noteId),
   })
+}
+
+export function canUserMutateMentee(user: User): boolean {
+  return user.role !== Role.BUDDY
+}
+
+export function canUserMutateNote(user: User, note: Note): boolean {
+  return user.id === note.authorId || user.role !== Role.BUDDY
 }

@@ -100,7 +100,6 @@ export const action: ActionFunction = async ({ request }) => {
     return json({ errors: { country: "Invalid country" } }, { status: 400 })
   }
 
-  // check if buddy exists
   const buddy = await getBuddyByEmail(buddyEmail)
   invariant(buddy, "Buddy does not exist")
 
@@ -112,6 +111,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   if (notes) {
     await createNote({
+      authorId: user.id,
       menteeId: mentee.id,
       content: notes,
     })
