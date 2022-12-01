@@ -8,12 +8,8 @@ import {
   Paper,
   Button,
   TextField,
-  FormControlLabel,
   Grid,
   FormControl,
-  FormLabel,
-  RadioGroup,
-  Radio,
   InputLabel,
   Select,
   MenuItem,
@@ -25,13 +21,9 @@ import {
   useTransition,
 } from "@remix-run/react"
 
-import { useUser } from "~/utils/user"
 import { useForm } from "~/components/hooks/use-form"
 import { validateAction, Zod } from "~/utils/validation"
-import { createMentee, createNote } from "~/models/mentee.server"
-import { requireUser, requireUserId } from "~/session.server"
-import { CountrySelect } from "~/components/country-select"
-import { getCountryCodeFromName } from "~/utils/country"
+import { requireUser } from "~/session.server"
 import { createUser, Role } from "~/models/user.server"
 
 export async function loader({ request }: LoaderArgs) {
