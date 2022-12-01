@@ -86,7 +86,6 @@ export async function action({ request, params }: ActionArgs) {
       menteeId,
       noteId,
     })
-    console.log("🚀 ~ action ~ note", note)
     invariant(note, "Note not found")
     invariant(canUserMutateNote(user, note), "Not allowed to delete note")
     await deleteNote({ menteeId, noteId })
@@ -102,7 +101,6 @@ export async function action({ request, params }: ActionArgs) {
 
 export default function MenteeIndexPage() {
   const { notes, canMutateMentee } = useLoaderData<typeof loader>()
-  console.log("🚀 ~ MenteeIndexPage ~ notes", notes)
   const transition = useTransition()
   const [editingId, setEditingId] = React.useState<Note["id"] | null>(null)
 
