@@ -203,7 +203,7 @@ export async function updateNote({
   content: Note["content"]
 }): Promise<void> {
   const db = await arc.tables()
-  const res = await db.mentees.update({
+  await db.mentees.update({
     Key: {
       pk: id2pk(menteeId),
       sk: id2NoteSk(noteId),
