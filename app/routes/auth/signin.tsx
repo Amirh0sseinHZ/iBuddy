@@ -27,7 +27,7 @@ export default function SignInPage() {
   const redirectTo = useRedirectToValue()
   const actionData = useActionData()
   const transition = useTransition()
-  const isBusy = transition.state !== "idle"
+  const isBusy = transition.state !== "idle" && Boolean(transition.submission)
 
   const { register } = useForm(actionData?.errors)
 

@@ -124,7 +124,7 @@ export default function NewMenteePage() {
   const actionData = useActionData()
   const { register } = useForm(actionData?.errors)
   const transition = useTransition()
-  const isBusy = transition.state !== "idle"
+  const isBusy = transition.state !== "idle" && Boolean(transition.submission)
 
   const [gender, setGender] = React.useState("male")
   const [degree, setDegree] = React.useState("bachelor")

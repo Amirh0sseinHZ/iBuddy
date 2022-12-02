@@ -121,7 +121,7 @@ export default function NewUserPage() {
   const actionData = useActionData()
   const { register } = useForm(actionData?.errors)
   const transition = useTransition()
-  const isBusy = transition.state !== "idle"
+  const isBusy = transition.state !== "idle" && Boolean(transition.submission)
 
   return (
     <Box sx={{ width: "100%", mt: 6 }}>
