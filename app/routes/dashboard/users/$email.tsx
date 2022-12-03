@@ -32,10 +32,8 @@ export async function loader({ params, request }: LoaderArgs) {
   const { email } = params
   invariant(email, "email is required")
   const loggedInUser = await requireUser(request)
-
   const userToShow = await getUserByEmail(email)
   invariant(userToShow, "User not found")
-
   const [mentees, canBeDeleted] = await Promise.all([
     getMenteeListItems({ buddyId: userToShow.id }),
     canUserDeleteUser({
@@ -43,7 +41,6 @@ export async function loader({ params, request }: LoaderArgs) {
       userToDelete: userToShow,
     }),
   ])
-
   return json({
     user: {
       ...userToShow,

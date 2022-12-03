@@ -1,36 +1,40 @@
 import * as z from "zod"
-import type { ActionFunction, LoaderArgs } from "@remix-run/node"
-import { redirect } from "@remix-run/node"
-import { json } from "@remix-run/node"
-
-import {
-  Box,
-  Paper,
-  Button,
-  TextField,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material"
+import type { ActionFunction, LoaderArgs } from "@remix-run/server-runtime"
+import { redirect } from "@remix-run/server-runtime"
+import { json } from "@remix-run/server-runtime"
 import {
   Form,
   useActionData,
   useLoaderData,
   useTransition,
 } from "@remix-run/react"
+import invariant from "tiny-invariant"
 
-import { useForm } from "~/components/hooks/use-form"
-import { validateAction, Zod } from "~/utils/validation"
+import {
+  Box,
+  Button,
+  FormControl,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  TextField,
+} from "@mui/material"
+
 import { requireUser } from "~/session.server"
-import { createUser, Role } from "~/models/user.server"
+import { getUserByEmail, Role, updateUser } from "~/models/user.server"
+import { validateAction, Zod } from "~/utils/validation"
+import { useForm } from "~/components/hooks/use-form"
 
-export async function loader({ request }: LoaderArgs) {
-  const user = await requireUser(request)
-  if (user.role === Role.BUDDY) {
-    return redirect("/dashboard")
-  }
+export async function loader({ request, params }: LoaderArgs) {
+  const { email } = params
+  invariant(email, "email is required")
+  const [user, userToEdit] = await Promise.all([
+    requireUser(request),
+    getUserByEmail(email),
+  ])
+  invariant(userToEdit, "User not found")
   const roles = [
     {
       role: Role.BUDDY,
@@ -53,14 +57,14 @@ export async function loader({ request }: LoaderArgs) {
       disabled: user.role !== Role.ADMIN,
     },
   ]
-  return json({ roles })
+  return json({ roles, user: userToEdit })
 }
 
 const schema = z
   .object({
     firstName: Zod.name("First name"),
     lastName: Zod.name("Last name"),
-    email: Zod.email(),
+    // email: z.,
     faculty: Zod.requiredString("Faculty"),
     agreementStartDate: Zod.dateString("Start date"),
     agreementEndDate: Zod.dateString("End date"),
@@ -94,7 +98,7 @@ const schema = z
 
 type ActionInput = z.TypeOf<typeof schema>
 
-export const action: ActionFunction = async ({ request }) => {
+export const action: ActionFunction = async ({ request, params }) => {
   const user = await requireUser(request)
   const { formData, errors } = await validateAction<ActionInput>({
     request,
@@ -105,23 +109,31 @@ export const action: ActionFunction = async ({ request }) => {
   }
   if (user.role !== Role.ADMIN && formData.role >= user.role) {
     return json(
-      { errors: { role: "Not allowed to create a user with such access" } },
+      { errors: { role: "You are not allowed update the user to given role" } },
       { status: 400 },
     )
   }
-  await createUser({
+  const { email } = params
+  invariant(email, "email is required")
+  await updateUser({
+    email,
     ...formData,
-    password: "password",
   })
-  return redirect("/dashboard/users")
+  return redirect(`/dashboard/users/${email}`)
 }
 
-export default function NewUserPage() {
-  const { roles } = useLoaderData<typeof loader>()
+export default function EditUserPage() {
+  const { roles, user } = useLoaderData<typeof loader>()
   const actionData = useActionData()
   const { register } = useForm(actionData?.errors)
   const transition = useTransition()
   const isBusy = transition.state !== "idle" && Boolean(transition.submission)
+
+  const convertIsoDateStringToNativeHTMLInputValue = (date: string) => {
+    return new Date(date).toLocaleString("en-CA", {
+      dateStyle: "short",
+    })
+  }
 
   return (
     <Box sx={{ width: "100%", mt: 6 }}>
@@ -143,6 +155,7 @@ export default function NewUserPage() {
                   fullWidth
                   autoFocus
                   label="First Name"
+                  defaultValue={user.firstName}
                   {...register("firstName")}
                 />
               </Grid>
@@ -151,6 +164,7 @@ export default function NewUserPage() {
                   required
                   fullWidth
                   label="Last Name"
+                  defaultValue={user.lastName}
                   {...register("lastName")}
                 />
               </Grid>
@@ -159,6 +173,7 @@ export default function NewUserPage() {
                   required
                   fullWidth
                   label="Faculty"
+                  defaultValue={user.faculty}
                   {...register("faculty")}
                 />
               </Grid>
@@ -167,7 +182,8 @@ export default function NewUserPage() {
                   required
                   fullWidth
                   label="Email Address"
-                  {...register("email")}
+                  defaultValue={user.email}
+                  disabled={true}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -176,7 +192,7 @@ export default function NewUserPage() {
                   <Select
                     labelId="user-role"
                     label="User role"
-                    defaultValue={roles[0].role}
+                    defaultValue={user.role}
                     disabled={roles.filter(role => !role.disabled).length <= 1}
                     {...register("role")}
                   >
@@ -201,6 +217,9 @@ export default function NewUserPage() {
                   InputLabelProps={{
                     shrink: true,
                   }}
+                  defaultValue={convertIsoDateStringToNativeHTMLInputValue(
+                    user.agreementStartDate,
+                  )}
                   {...register("agreementStartDate")}
                 />
               </Grid>
@@ -213,6 +232,9 @@ export default function NewUserPage() {
                   InputLabelProps={{
                     shrink: true,
                   }}
+                  defaultValue={convertIsoDateStringToNativeHTMLInputValue(
+                    user.agreementEndDate,
+                  )}
                   {...register("agreementEndDate")}
                 />
               </Grid>
@@ -224,7 +246,7 @@ export default function NewUserPage() {
               sx={{ mt: 3, mb: 2 }}
               disabled={isBusy}
             >
-              Register {isBusy && "..."}
+              {isBusy ? "Saving..." : "Save"}
             </Button>
           </Form>
         </Box>

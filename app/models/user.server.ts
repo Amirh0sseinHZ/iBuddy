@@ -92,6 +92,14 @@ export async function createUser({
   return user
 }
 
+export async function updateUser(updatedUser: Omit<User, "id">): Promise<User> {
+  const db = await arc.tables()
+  return await db.users.put({
+    id: email2UserId(updatedUser.email),
+    ...updatedUser,
+  })
+}
+
 export async function deleteUser(id: UserId): Promise<void> {
   const db = await arc.tables()
   await db.passwords.delete({ userId: id })

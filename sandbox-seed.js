@@ -2,6 +2,13 @@ const bcrypt = require("bcryptjs")
 const cuid = require("cuid")
 const { faker } = require("@faker-js/faker")
 
+const ROLE = {
+  BUDDY: "0",
+  HR: "1",
+  PRESIDENT: "2",
+  ADMIN: "3",
+}
+
 function buildUser(overrides = {}) {
   const email = overrides.user?.email ?? faker.internet.email()
   const id = `User#${email}`
@@ -18,7 +25,7 @@ function buildUser(overrides = {}) {
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
       faculty: faker.company.name(),
-      role: faker.datatype.number({ min: 0, max: 3 }),
+      role: faker.helpers.arrayElement(Object.values(ROLE)),
       agreementStartDate: faker.date.recent().toISOString(),
       agreementEndDate: faker.date
         .soon(faker.datatype.number({ min: 10, max: 180 }))
@@ -88,13 +95,6 @@ function buildNote(overrides = {}) {
     createdAt: faker.date.recent().toISOString(),
     ...overrides,
   }
-}
-
-const ROLE = {
-  BUDDY: 0,
-  HR: 1,
-  PRESIDENT: 2,
-  ADMIN: 3,
 }
 
 const adminUser = {
