@@ -1,6 +1,7 @@
 import arc from "@architect/functions"
 import bcrypt from "bcryptjs"
 import invariant from "tiny-invariant"
+import { getMenteeCount } from "./mentee.server"
 
 export enum Role {
   "BUDDY" = "0",
@@ -97,6 +98,11 @@ export async function deleteUser(id: UserId): Promise<void> {
   await db.users.delete({ id })
 }
 
+export async function deleteUserByEmail(email: UserEmail): Promise<void> {
+  const userId = email2UserId(email)
+  await deleteUser(userId)
+}
+
 export async function verifyLogin(
   email: UserEmail,
   password: Password["password"],
@@ -119,4 +125,20 @@ export async function getBuddyByEmail(
   }
   const isBuddyActive = new Date(buddy.agreementEndDate) > new Date()
   return isBuddyActive ? buddy : null
+}
+
+export async function canUserDeleteUser({
+  loggedInUser,
+  userToDelete,
+}: {
+  loggedInUser: User
+  userToDelete: User
+}): Promise<boolean> {
+  const isHigher = loggedInUser.role > userToDelete.role
+  const isNotAdmin = userToDelete.role !== Role.ADMIN
+  const isNotLoggedInUser = loggedInUser.id !== userToDelete.id
+  const hasNoMentees =
+    (await getMenteeCount({ buddyId: userToDelete.id })) === 0
+
+  return isHigher && isNotAdmin && isNotLoggedInUser && hasNoMentees
 }

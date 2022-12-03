@@ -87,7 +87,7 @@ export default function UsersIndexPage() {
                         scope="row"
                         sx={{ textDecoration: "underline" }}
                       >
-                        <PendingLink to={`/dashboard/users/${user.id}`}>
+                        <PendingLink to={`/dashboard/users/${user.email}`}>
                           {`${user.firstName} ${user.lastName}`}
                         </PendingLink>
                       </TableCell>
