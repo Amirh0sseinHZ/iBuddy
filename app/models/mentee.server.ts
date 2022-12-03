@@ -130,6 +130,16 @@ export async function createMentee({
   return mentee
 }
 
+export async function updateMentee(updatedMentee: Mentee): Promise<Mentee> {
+  const key = id2pk(updatedMentee.id)
+  const db = await arc.tables()
+  return await db.mentees.put({
+    pk: key,
+    sk: key,
+    ...updatedMentee,
+  })
+}
+
 export async function deleteMentee(menteeId: Mentee["id"]): Promise<void> {
   const key = id2pk(menteeId)
   const db = await arc.tables()

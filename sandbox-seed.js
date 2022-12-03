@@ -69,6 +69,10 @@ function buildMentee(overrides = {}) {
     homeUniversity: faker.company.name(),
     hostFaculty: faker.company.name(),
     degree: faker.helpers.arrayElement(["bachelor", "master", "others"]),
+    agreementStartDate: faker.date.recent().toISOString(),
+    agreementEndDate: faker.date
+      .soon(faker.datatype.number({ min: 150, max: 180 }))
+      .toISOString(),
     ...overrides,
   }
 

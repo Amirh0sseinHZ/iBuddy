@@ -1,4 +1,3 @@
-import * as React from "react"
 import * as z from "zod"
 import type { ActionFunction, LoaderArgs } from "@remix-run/node"
 import { redirect } from "@remix-run/node"
@@ -29,7 +28,7 @@ import { requireUser } from "~/session.server"
 import { CountrySelect } from "~/components/country-select"
 import { getCountryCodeFromName } from "~/utils/country"
 import { getBuddyByEmail, Role } from "~/models/user.server"
-import { useBuddyList } from "../resources/buddies"
+import { useBuddyList } from "../../resources/buddies"
 
 export async function loader({ request }: LoaderArgs) {
   const user = await requireUser(request)
@@ -126,17 +125,6 @@ export default function NewMenteePage() {
   const transition = useTransition()
   const isBusy = transition.state !== "idle" && Boolean(transition.submission)
 
-  const [gender, setGender] = React.useState("male")
-  const [degree, setDegree] = React.useState("bachelor")
-
-  const handleChangeGender = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setGender((event.target as HTMLInputElement).value)
-  }
-
-  const handleChangeDegree = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setDegree((event.target as HTMLInputElement).value)
-  }
-
   return (
     <Box sx={{ width: "100%", mt: 6 }}>
       <Paper sx={{ width: "100%", mb: 2 }}>
@@ -205,9 +193,7 @@ export default function NewMenteePage() {
                   <RadioGroup
                     row
                     aria-labelledby="gender-row-radio-buttons-group-label"
-                    name="gender"
-                    value={gender}
-                    onChange={handleChangeGender}
+                    {...register("gender")}
                   >
                     <FormControlLabel
                       value="male"
@@ -230,9 +216,7 @@ export default function NewMenteePage() {
                   <RadioGroup
                     row
                     aria-labelledby="degree-row-radio-buttons-group-label"
-                    name="degree"
-                    value={degree}
-                    onChange={handleChangeDegree}
+                    {...register("degree")}
                   >
                     <FormControlLabel
                       value="bachelor"
