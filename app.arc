@@ -22,7 +22,14 @@ mentees
   pk *String
   sk **String
 
+assets
+  id *String
+
 @tables-indexes
 mentees
   buddyId *string
   name menteesByBuddyId
+
+assets
+  ownerId *string
+  name assetsByOwnerId

@@ -22,8 +22,13 @@ import {
   ListSubheader,
 } from "@mui/material"
 import Icon from "@mdi/react"
-import { mdiChevronLeft, mdiMenu } from "@mdi/js"
-import { mdiViewDashboard, mdiAccountPlus, mdiAccountGroup } from "@mdi/js"
+import {
+  mdiChevronLeft,
+  mdiMenu,
+  mdiViewDashboard,
+  mdiAccountPlus,
+  mdiAccountGroup,
+} from "@mdi/js"
 
 import { requireUser } from "~/session.server"
 
@@ -224,38 +229,64 @@ export default function DashboardRoute() {
               </ListItemButton>
             </PendingNavLink>
           ) : null}
+          {!isBuddy ? (
+            <>
+              <Divider sx={{ my: 1 }} />
+              <ListSubheader component="div" inset>
+                User management
+              </ListSubheader>
+              <PendingNavLink
+                to="/dashboard/users"
+                activeClassName={linkActiveClassName}
+              >
+                <ListItemButton>
+                  <ListItemIcon>
+                    <Icon path={mdiAccountGroup} size={1} />
+                  </ListItemIcon>
+                  <ListItemText primary="Users" />
+                </ListItemButton>
+              </PendingNavLink>
+              <PendingNavLink
+                to="/dashboard/users/new"
+                activeClassName={linkActiveClassName}
+              >
+                <ListItemButton>
+                  <ListItemIcon>
+                    <Icon path={mdiAccountPlus} size={1} />
+                  </ListItemIcon>
+                  <ListItemText primary="New user" />
+                </ListItemButton>
+              </PendingNavLink>
+            </>
+          ) : null}
+          <Divider sx={{ my: 1 }} />
+          <ListSubheader component="div" inset>
+            Asset management
+          </ListSubheader>
+          <PendingNavLink
+            to="/dashboard/assets"
+            activeClassName={linkActiveClassName}
+          >
+            <ListItemButton>
+              <ListItemIcon>
+                <Icon path={mdiAccountGroup} size={1} />
+              </ListItemIcon>
+              <ListItemText primary="Assets" />
+            </ListItemButton>
+          </PendingNavLink>
+          <PendingNavLink
+            to="/dashboard/assets/new"
+            activeClassName={linkActiveClassName}
+          >
+            <ListItemButton>
+              <ListItemIcon>
+                <Icon path={mdiAccountPlus} size={1} />
+              </ListItemIcon>
+              <ListItemText primary="New asset" />
+            </ListItemButton>
+          </PendingNavLink>
+          <Divider />
         </List>
-        {!isBuddy ? (
-          <>
-            <Divider sx={{ my: 1 }} />
-            <ListSubheader component="div" inset>
-              User management
-            </ListSubheader>
-            <PendingNavLink
-              to="/dashboard/users"
-              activeClassName={linkActiveClassName}
-            >
-              <ListItemButton>
-                <ListItemIcon>
-                  <Icon path={mdiAccountGroup} size={1} />
-                </ListItemIcon>
-                <ListItemText primary="Users" />
-              </ListItemButton>
-            </PendingNavLink>
-            <PendingNavLink
-              to="/dashboard/users/new"
-              activeClassName={linkActiveClassName}
-            >
-              <ListItemButton>
-                <ListItemIcon>
-                  <Icon path={mdiAccountPlus} size={1} />
-                </ListItemIcon>
-                <ListItemText primary="New user" />
-              </ListItemButton>
-            </PendingNavLink>
-          </>
-        ) : null}
-        <Divider />
       </Drawer>
       <Box
         component="main"

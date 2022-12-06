@@ -150,3 +150,7 @@ export async function canUserDeleteUser({
 
   return isHigher && isNotAdmin && isNotLoggedInUser && hasNoMentees
 }
+
+export function isUserId(value: any): value is UserId {
+  return typeof value === "string" && value.startsWith("User#")
+}

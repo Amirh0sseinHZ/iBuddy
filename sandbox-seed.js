@@ -9,6 +9,36 @@ const ROLE = {
   ADMIN: "3",
 }
 
+const adminUser = {
+  ...buildUser({
+    user: { email: "admin@example.com", role: ROLE.ADMIN },
+    password: { password: bcrypt.hashSync("password", 10) },
+  }),
+}
+const presidentUser = buildUser({
+  user: { role: ROLE.PRESIDENT },
+})
+const hrUsers = Array.from({ length: 3 }, () =>
+  buildUser({ user: { role: ROLE.HR } }),
+)
+const buddyUsers = Array.from({ length: 10 }, () =>
+  buildUser({ user: { role: ROLE.BUDDY } }),
+)
+
+let users = [adminUser, presidentUser, ...hrUsers, ...buddyUsers]
+const passwords = users.map(u => u.password)
+const mentees = users.map(u => u.mentees).flat()
+const assets = users.map(u => u.assets).flat()
+users = users.map(u => u.user)
+
+const seed = {
+  users,
+  passwords,
+  mentees,
+  assets,
+}
+module.exports = seed
+//------------------------------------------------------------------------------
 function buildUser(overrides = {}) {
   const email = overrides.user?.email ?? faker.internet.email()
   const id = `User#${email}`
@@ -43,6 +73,13 @@ function buildUser(overrides = {}) {
         buildMentee({
           buddyId: id,
           ...menteesOvrrides,
+        }),
+    ).flat(),
+    assets: Array.from(
+      { length: faker.datatype.number({ min: 0, max: 2 }) },
+      () =>
+        buildAsset({
+          ownerId: id,
         }),
     ).flat(),
     ...restOfOverrides,
@@ -97,34 +134,21 @@ function buildNote(overrides = {}) {
     id,
     content: faker.lorem.paragraphs(3),
     createdAt: faker.date.recent().toISOString(),
+    authorId: cuid(),
     ...overrides,
   }
 }
 
-const adminUser = {
-  ...buildUser({
-    user: { email: "admin@example.com", role: ROLE.ADMIN },
-    password: { password: bcrypt.hashSync("password", 10) },
-  }),
+function buildAsset(overrides = {}) {
+  return {
+    id: cuid(),
+    ownerId: cuid(),
+    name: faker.lorem.words(3),
+    description: faker.lorem.paragraphs(1),
+    type: faker.helpers.arrayElement(["image", "document", "email-template"]),
+    sharedUsers: [],
+    host: "local",
+    createdAt: faker.date.recent().toISOString(),
+    ...overrides,
+  }
 }
-const presidentUser = buildUser({
-  user: { role: ROLE.PRESIDENT },
-})
-const hrUsers = Array.from({ length: 3 }, () =>
-  buildUser({ user: { role: ROLE.HR } }),
-)
-const buddyUsers = Array.from({ length: 10 }, () =>
-  buildUser({ user: { role: ROLE.BUDDY } }),
-)
-
-let users = [adminUser, presidentUser, ...hrUsers, ...buddyUsers]
-const passwords = users.map(u => u.password)
-const mentees = users.map(u => u.mentees).flat()
-users = users.map(u => u.user)
-
-const seed = {
-  users,
-  passwords,
-  mentees,
-}
-module.exports = seed

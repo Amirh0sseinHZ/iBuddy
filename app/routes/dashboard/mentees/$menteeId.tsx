@@ -116,7 +116,7 @@ export async function action({ request, params }: ActionArgs) {
   return new Response()
 }
 
-export default function MenteeIndexPage() {
+export default function MenteePage() {
   const { notes, canMutateMentee, mentee } = useLoaderData<typeof loader>()
   const transition = useTransition()
   const [editingId, setEditingId] = React.useState<Note["id"] | null>(null)
