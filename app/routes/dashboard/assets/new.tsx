@@ -6,7 +6,6 @@ import type {
   FileUploadHandlerFilterArgs,
   NodeOnDiskFile,
 } from "@remix-run/node/dist/upload/fileUploadHandler"
-import { unstable_createFileUploadHandler as createFileUploadHandler } from "@remix-run/node"
 import { unstable_parseMultipartFormData as parseMultipartFormData } from "@remix-run/server-runtime"
 import {
   Form,
@@ -28,7 +27,10 @@ import Select from "@mui/material/Select"
 import MenuItem from "@mui/material/MenuItem"
 import InputLabel from "@mui/material/InputLabel"
 
-import { createS3FileUploadHandler } from "~/utils/s3-upload-handler.server"
+import {
+  createS3FileUploadHandler,
+  createLocalFileUploadHandler,
+} from "~/utils/upload-handler"
 import { validateAction, Zod } from "~/utils/validation"
 import { useForm } from "~/components/hooks/use-form"
 import type { Asset } from "~/models/asset.server"
@@ -38,7 +40,6 @@ import { useUserList } from "~/routes/resources/users"
 import OutlinedInput from "@mui/material/OutlinedInput"
 import { getUserById, isUserId } from "~/models/user.server"
 
-const LOCAL_UPLOAD_PATH = "../public/uploads"
 const UPLOAD_FIELD_NAME = "file"
 const MAX_FILE_SIZE_IN_BYTES = 1024 * 1024 * 10 // 10MB
 const ASSET_TYPES: Readonly<Record<Asset["type"], Readonly<string[]>>> = {
@@ -106,17 +107,13 @@ export async function action({ request }: ActionArgs) {
     throw new Error("Invalid user id submitted for sharing")
   })
 
-  const isProduction = process.env.NODE_ENV === "production"
-  const uploadHandler = isProduction
-    ? createS3FileUploadHandler({
-        filter: allowOnlyPermittedFiles,
-        maxPartSize: MAX_FILE_SIZE_IN_BYTES,
-      })
-    : createFileUploadHandler({
-        filter: allowOnlyPermittedFiles,
-        maxPartSize: MAX_FILE_SIZE_IN_BYTES,
-        directory: LOCAL_UPLOAD_PATH,
-      })
+  const isProduction = process.env.NODE_ENV !== "production"
+  const uploadHandler = (
+    isProduction ? createS3FileUploadHandler : createLocalFileUploadHandler
+  )({
+    filter: allowOnlyPermittedFiles,
+    maxPartSize: MAX_FILE_SIZE_IN_BYTES,
+  })
   const formData = await parseMultipartFormData(request, uploadHandler)
   const file = formData.get("file") as NodeOnDiskFile | File
   if (!file) {

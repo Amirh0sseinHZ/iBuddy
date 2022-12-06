@@ -2,7 +2,7 @@ import type { LoaderArgs } from "@remix-run/server-runtime"
 import invariant from "tiny-invariant"
 import { canViewAsset, getAssetById } from "~/models/asset.server"
 import { requireUser } from "~/session.server"
-import { getObjectPromise } from "~/utils/s3-upload-handler.server"
+import { getObjectPromise } from "~/utils/s3"
 
 export async function loader({ params, request }: LoaderArgs) {
   const user = await requireUser(request)

@@ -1,6 +1,8 @@
 import arc from "@architect/functions"
 import cuid from "cuid"
 import invariant from "tiny-invariant"
+import { destroyS3File } from "~/utils/s3"
+import { deleteLocalFileSafely } from "~/utils/upload-handler"
 import type { User } from "./user.server"
 import { Role } from "./user.server"
 
@@ -69,6 +71,22 @@ export async function createAsset(
   return asset
 }
 
+export async function deleteAsset(id: Asset["id"]): Promise<void> {
+  const db = await arc.tables()
+  const asset = await getAssetById(id)
+  if (!asset) {
+    return
+  }
+  await db.assets.delete({ id })
+  if (asset.host === "s3") {
+    await destroyS3File(asset.src)
+  } else if (asset.host === "local") {
+    deleteLocalFileSafely(asset.src)
+  } else {
+    throw new Error("Unknown asset host")
+  }
+}
+
 export function canViewAsset({
   asset,
   user,
@@ -81,4 +99,14 @@ export function canViewAsset({
     user.id === asset.ownerId ||
     asset.sharedUsers.includes(user.id)
   )
+}
+
+export function canDeleteAsset({
+  asset,
+  user,
+}: {
+  asset: Asset
+  user: User
+}): boolean {
+  return user.role === Role.ADMIN || user.id === asset.ownerId
 }
