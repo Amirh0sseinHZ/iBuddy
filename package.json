@@ -60,6 +60,8 @@
     "isbot": "^3.5.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-quill": "^2.0.0",
+    "sanitize-html": "^2.7.3",
     "tiny-invariant": "^1.2.0",
     "validator": "^13.7.0",
     "zod": "^3.19.1"
@@ -78,6 +80,7 @@
     "@types/eslint": "^8.4.6",
     "@types/react": "^18.0.20",
     "@types/react-dom": "^18.0.6",
+    "@types/sanitize-html": "^2.6.2",
     "@types/validator": "^13.7.7",
     "@vitejs/plugin-react": "^2.1.0",
     "@vitest/coverage-c8": "^0.23.4",
