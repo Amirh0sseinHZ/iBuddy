@@ -71,6 +71,29 @@ export async function createAsset(
   return asset
 }
 
+export async function updateAsset({
+  id,
+  name,
+  description,
+  sharedUsers,
+}: Pick<Asset, "id" | "name" | "description" | "sharedUsers">): Promise<Asset> {
+  const db = await arc.tables()
+  const result = await db.assets.update({
+    Key: { id },
+    UpdateExpression:
+      "set #name = :name, description = :description, sharedUsers = :sharedUsers, updatedAt = :updatedAt",
+    ExpressionAttributeNames: { "#name": "name" },
+    ExpressionAttributeValues: {
+      ":name": name,
+      ":description": description,
+      ":sharedUsers": sharedUsers,
+      ":updatedAt": new Date().toISOString(),
+    },
+    ReturnValues: "ALL_NEW",
+  })
+  return result.Attributes as Asset
+}
+
 export async function deleteAsset(id: Asset["id"]): Promise<void> {
   const db = await arc.tables()
   const asset = await getAssetById(id)
@@ -87,7 +110,7 @@ export async function deleteAsset(id: Asset["id"]): Promise<void> {
   }
 }
 
-export function canViewAsset({
+export function canUserViewAsset({
   asset,
   user,
 }: {
@@ -101,7 +124,7 @@ export function canViewAsset({
   )
 }
 
-export function canDeleteAsset({
+export function canUserMutateAsset({
   asset,
   user,
 }: {

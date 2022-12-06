@@ -240,13 +240,14 @@ function CreateFileAsset() {
         required
         {...register(UPLOAD_FIELD_NAME)}
       />
-      <FormControl disabled={isUserListLoading} fullWidth>
+      <FormControl fullWidth>
         <InputLabel id="demo-multiple-name-label">Shared with</InputLabel>
         <Select
           labelId="demo-multiple-name-label"
           id="demo-multiple-name"
           defaultValue={[]}
           input={<OutlinedInput label="Name" />}
+          disabled={isUserListLoading}
           multiple
           {...register("sharedUsers")}
         >

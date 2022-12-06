@@ -1,6 +1,6 @@
 import type { LoaderArgs } from "@remix-run/server-runtime"
 import invariant from "tiny-invariant"
-import { canViewAsset, getAssetById } from "~/models/asset.server"
+import { canUserViewAsset, getAssetById } from "~/models/asset.server"
 import { requireUser } from "~/session.server"
 import { getObjectPromise } from "~/utils/s3"
 
@@ -12,7 +12,7 @@ export async function loader({ params, request }: LoaderArgs) {
   const asset = await getAssetById(assetId)
   invariant(asset, "Asset not found")
   invariant(
-    canViewAsset({ user, asset }),
+    canUserViewAsset({ user, asset }),
     "You are not allowed to view this asset",
   )
 

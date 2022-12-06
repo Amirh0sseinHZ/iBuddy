@@ -1,14 +1,13 @@
 import Button from "@mui/material/Button"
-import { Form, useLoaderData } from "@remix-run/react"
+import { Form, Link, useLoaderData } from "@remix-run/react"
 import type { ActionArgs, LoaderArgs } from "@remix-run/server-runtime"
 import { redirect } from "@remix-run/server-runtime"
 import { json } from "@remix-run/server-runtime"
 import invariant from "tiny-invariant"
 
 import type { Asset } from "~/models/asset.server"
-import { canDeleteAsset } from "~/models/asset.server"
-import { deleteAsset } from "~/models/asset.server"
-import { canViewAsset } from "~/models/asset.server"
+import { canUserMutateAsset } from "~/models/asset.server"
+import { deleteAsset, canUserViewAsset } from "~/models/asset.server"
 import { getAssetById } from "~/models/asset.server"
 import { requireUser } from "~/session.server"
 import { getSignedUrl } from "~/utils/s3"
@@ -31,7 +30,7 @@ export async function loader({ params, request }: LoaderArgs) {
   const asset = await getAssetById(assetId)
   invariant(asset, "Asset not found")
   invariant(
-    canViewAsset({ user, asset }),
+    canUserViewAsset({ user, asset }),
     "You are not allowed to view this asset",
   )
 
@@ -41,7 +40,7 @@ export async function loader({ params, request }: LoaderArgs) {
       src:
         asset.type === "image" ? await resolveImageAssetUrl(asset) : asset.src,
     },
-    canDeleteAsset: canDeleteAsset({ user, asset }),
+    canUserMutateAsset: canUserMutateAsset({ user, asset }),
   })
 }
 
@@ -52,7 +51,7 @@ export async function action({ params, request }: ActionArgs) {
   const asset = await getAssetById(assetId)
   invariant(asset, "Asset not found")
   invariant(
-    canDeleteAsset({ user, asset }),
+    canUserMutateAsset({ user, asset }),
     "You are not allowed to delete this asset",
   )
   await deleteAsset(assetId)
@@ -60,7 +59,7 @@ export async function action({ params, request }: ActionArgs) {
 }
 
 export default function AssetPage() {
-  const { asset, canDeleteAsset } = useLoaderData<typeof loader>()
+  const { asset, canUserMutateAsset } = useLoaderData<typeof loader>()
 
   const displayAsset = () => {
     switch (asset.type) {
@@ -86,10 +85,13 @@ export default function AssetPage() {
 
   return (
     <div>
-      {canDeleteAsset ? (
-        <Form method="delete">
-          <Button type="submit">Delete</Button>
-        </Form>
+      {canUserMutateAsset ? (
+        <>
+          <Form method="delete">
+            <Button type="submit">Delete</Button>
+          </Form>
+          <Link to={`/dashboard/assets/${asset.id}/edit`}>Edit</Link>
+        </>
       ) : null}
       <pre>{JSON.stringify(asset, null, 2)}</pre>
       {displayAsset()}
