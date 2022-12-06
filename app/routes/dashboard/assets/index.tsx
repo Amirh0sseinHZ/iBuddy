@@ -16,7 +16,11 @@ import Switch from "@mui/material/Switch"
 import Grid from "@mui/material/Grid"
 
 import { requireUser } from "~/session.server"
-import { getAllAssets, getUserAssets } from "~/models/asset.server"
+import {
+  getAllAssets,
+  getUserAccessibleAssets,
+  getUserAssets,
+} from "~/models/asset.server"
 import { Role } from "~/models/user.server"
 import { PendingLink } from "~/components/link"
 
@@ -31,7 +35,7 @@ export async function loader({ request }: LoaderArgs) {
     ? getUserAssets(user.id)
     : isAdmin
     ? getAllAssets()
-    : getUserAssets(user.id))
+    : getUserAccessibleAssets(user.id))
 
   return json({ assets })
 }

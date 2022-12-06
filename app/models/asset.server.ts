@@ -27,6 +27,17 @@ export async function getUserAssets(ownerId: User["id"]): Promise<Asset[]> {
   return result.Items
 }
 
+export async function getUserAccessibleAssets(
+  ownerId: User["id"],
+): Promise<Asset[]> {
+  const db = await arc.tables()
+  const result = await db.assets.scan({
+    FilterExpression: "ownerId = :ownerId or contains(sharedUsers, :ownerId)",
+    ExpressionAttributeValues: { ":ownerId": ownerId },
+  })
+  return result.Items
+}
+
 export async function getAllAssets(): Promise<Asset[]> {
   const db = await arc.tables()
   const result = await db.assets.scan({})
