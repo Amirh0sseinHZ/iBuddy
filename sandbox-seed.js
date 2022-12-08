@@ -1,6 +1,11 @@
 const bcrypt = require("bcryptjs")
 const cuid = require("cuid")
 const { faker } = require("@faker-js/faker")
+const fs = require("fs")
+const path = require("path")
+
+const ASSET_SAVE_PATH = path.join(__dirname, "./public/uploads")
+const imageAssets = fs.readdirSync(ASSET_SAVE_PATH)
 
 const ROLE = {
   BUDDY: "0",
@@ -140,15 +145,37 @@ function buildNote(overrides = {}) {
 }
 
 function buildAsset(overrides = {}) {
+  const type = faker.helpers.arrayElement([
+    "image",
+    "document",
+    "email-template",
+  ])
+  let src
+  switch (type) {
+    case "image": {
+      src = faker.helpers.arrayElement(imageAssets)
+      break
+    }
+    case "email-template": {
+      src = `<p><b>Dear {{firstName}},</b><br/><br/>${faker.lorem.paragraphs(
+        3,
+      )}</p>`
+      break
+    }
+    case "document":
+    default:
+      src = ""
+  }
   return {
     id: cuid(),
     ownerId: cuid(),
     name: faker.lorem.words(3),
     description: faker.lorem.paragraphs(1),
-    type: faker.helpers.arrayElement(["image", "document", "email-template"]),
+    type,
     sharedUsers: [],
     host: "local",
     createdAt: faker.date.recent().toISOString(),
+    src,
     ...overrides,
   }
 }

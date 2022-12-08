@@ -1,5 +1,5 @@
 import * as z from "zod"
-import type { ActionArgs, LinksFunction } from "@remix-run/server-runtime"
+import type { ActionArgs } from "@remix-run/server-runtime"
 import { redirect } from "@remix-run/server-runtime"
 import { json } from "@remix-run/server-runtime"
 import type {
@@ -42,6 +42,7 @@ import { useUserList } from "~/routes/resources/users"
 import OutlinedInput from "@mui/material/OutlinedInput"
 import { getUserById, isUserId } from "~/models/user.server"
 import * as React from "react"
+import { CircularProgress } from "@mui/material"
 
 const ReactQuill = React.lazy(() => import("react-quill"))
 
@@ -88,15 +89,6 @@ const schema = z
   .refine(data => data.file || data.template, "file or template required.")
 
 type ActionInput = z.TypeOf<typeof schema>
-
-export const links: LinksFunction = () => {
-  return [
-    {
-      rel: "stylesheet",
-      href: "https://unpkg.com/react-quill@1.3.3/dist/quill.snow.css",
-    },
-  ]
-}
 
 export async function action({ request }: ActionArgs) {
   const userId = await requireUserId(request)
@@ -350,7 +342,7 @@ function CreateEmailTemplateAsset() {
         rows={3}
         {...register("description")}
       />
-      <React.Suspense fallback={<div>Loading...</div>}>
+      <React.Suspense fallback={<CircularProgress />}>
         <ReactQuill theme="snow" style={{ height: 300 }} ref={editorRef} />
       </React.Suspense>
       <FormControl fullWidth>

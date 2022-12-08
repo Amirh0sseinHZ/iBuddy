@@ -1,3 +1,4 @@
+import * as React from "react"
 import * as z from "zod"
 import Button from "@mui/material/Button"
 import FormControl from "@mui/material/FormControl"
@@ -10,14 +11,16 @@ import {
   Form,
   useActionData,
   useLoaderData,
+  useSubmit,
   useTransition,
 } from "@remix-run/react"
 import type { ActionArgs, LoaderArgs } from "@remix-run/server-runtime"
 import { redirect } from "@remix-run/server-runtime"
 import { json } from "@remix-run/server-runtime"
 import invariant from "tiny-invariant"
-import { useForm } from "~/components/hooks/use-form"
+import CircularProgress from "@mui/material/CircularProgress"
 
+import { useForm } from "~/components/hooks/use-form"
 import {
   canUserMutateAsset,
   getAssetById,
@@ -27,6 +30,8 @@ import { useUserList } from "~/routes/resources/users"
 import { requireUser } from "~/session.server"
 import { validateAction, Zod } from "~/utils/validation"
 import { getUserById, isUserId } from "~/models/user.server"
+
+const ReactQuill = React.lazy(() => import("react-quill"))
 
 export async function loader({ params, request }: LoaderArgs) {
   const user = await requireUser(request)
@@ -42,14 +47,30 @@ export async function loader({ params, request }: LoaderArgs) {
   return json({ asset })
 }
 
-const schema = z.object({
-  name: Zod.requiredString("Name"),
-  description: z
-    .string()
-    .max(2000, "Description cannot be too long")
-    .optional(),
-  sharedUsers: z.string().optional(),
-})
+const schema = z
+  .object({
+    name: Zod.requiredString("Name"),
+    description: z
+      .string()
+      .max(2000, "Description cannot be too long")
+      .optional(),
+    sharedUsers: z.string().optional(),
+    template: Zod.requiredString("Template"),
+    type: z.enum(["file", "email-template"]),
+  })
+  .partial({
+    template: true,
+  })
+  .refine(data => {
+    if (data.type !== "email-template") {
+      return true
+    }
+    if (!data.template) {
+      return false
+    }
+    const isEmptyHtml = data.template.replace(/<[^>]+>/g, "").trim() === ""
+    return !isEmptyHtml
+  }, "Template is required")
 
 type ActionInput = z.TypeOf<typeof schema>
 
@@ -64,7 +85,7 @@ export async function action({ params, request }: ActionArgs) {
     "You are not allowed to edit this asset",
   )
   const {
-    formData: { name, description, sharedUsers },
+    formData: { name, description, sharedUsers, type, template },
     errors,
   } = await validateAction<ActionInput>({
     request,
@@ -76,7 +97,9 @@ export async function action({ params, request }: ActionArgs) {
   invariant(
     typeof name === "string" &&
       typeof description === "string" &&
-      typeof sharedUsers === "string",
+      typeof sharedUsers === "string" &&
+      typeof type === "string" &&
+      typeof template === "string",
     "Form submitted incorrectly",
   )
   const sharedUserIds = sharedUsers.split(",").filter(Boolean)
@@ -94,6 +117,7 @@ export async function action({ params, request }: ActionArgs) {
 
   await updateAsset({
     id: assetId,
+    src: template,
     name,
     description,
     sharedUsers: validSharedUserIds,
@@ -103,15 +127,29 @@ export async function action({ params, request }: ActionArgs) {
 }
 
 export default function AssetPage() {
+  const submit = useSubmit()
   const { asset } = useLoaderData<typeof loader>()
   const actionData = useActionData()
   const { register } = useForm(actionData?.errors)
   const transition = useTransition()
   const isBusy = transition.state !== "idle" && Boolean(transition.submission)
   const { list: userList, isLoading: isUserListLoading } = useUserList()
+  // can't figure out the correct type for dynamically imported ReactQuill
+  const editorRef = React.useRef<any>(null)
 
   return (
-    <Form method="post" encType="multipart/form-data" noValidate>
+    <Form
+      method="post"
+      encType="multipart/form-data"
+      noValidate
+      onSubmit={e => {
+        e.preventDefault()
+        const template = editorRef.current?.unprivilegedEditor.getHTML()
+        const formData = new FormData(e.currentTarget)
+        formData.append("template", template)
+        submit(formData, { method: "post" })
+      }}
+    >
       <TextField
         variant="outlined"
         label="Name"
@@ -147,6 +185,21 @@ export default function AssetPage() {
           ))}
         </Select>
       </FormControl>
+      {asset.type === "email-template" ? (
+        <React.Suspense fallback={<CircularProgress />}>
+          <ReactQuill
+            theme="snow"
+            style={{ height: 300 }}
+            ref={editorRef}
+            defaultValue={asset.src}
+          />
+        </React.Suspense>
+      ) : null}
+      <input
+        type="hidden"
+        name="type"
+        value={asset.type === "email-template" ? "email-template" : "file"}
+      />
       <Button type="submit" variant="contained" disabled={isBusy}>
         {isBusy ? "Saving..." : "Save"}
       </Button>

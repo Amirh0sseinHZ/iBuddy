@@ -76,18 +76,27 @@ export async function updateAsset({
   name,
   description,
   sharedUsers,
-}: Pick<Asset, "id" | "name" | "description" | "sharedUsers">): Promise<Asset> {
+  src,
+}: Pick<
+  Asset,
+  "id" | "name" | "description" | "src" | "sharedUsers"
+>): Promise<Asset> {
+  const asset = await getAssetById(id)
+  invariant(asset, "Asset not found")
+  const updatedExpression = `set #name = :name, description = :description, sharedUsers = :sharedUsers, updatedAt = :updatedAt${
+    asset.type === "email-template" ? ", src = :src" : ""
+  }`
   const db = await arc.tables()
   const result = await db.assets.update({
     Key: { id },
-    UpdateExpression:
-      "set #name = :name, description = :description, sharedUsers = :sharedUsers, updatedAt = :updatedAt",
+    UpdateExpression: updatedExpression,
     ExpressionAttributeNames: { "#name": "name" },
     ExpressionAttributeValues: {
       ":name": name,
       ":description": description,
       ":sharedUsers": sharedUsers,
       ":updatedAt": new Date().toISOString(),
+      ...(asset.type === "email-template" ? { ":src": src } : {}),
     },
     ReturnValues: "ALL_NEW",
   })
