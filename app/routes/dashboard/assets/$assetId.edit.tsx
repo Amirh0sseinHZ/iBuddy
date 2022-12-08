@@ -19,6 +19,7 @@ import { redirect } from "@remix-run/server-runtime"
 import { json } from "@remix-run/server-runtime"
 import invariant from "tiny-invariant"
 import CircularProgress from "@mui/material/CircularProgress"
+import sanitizeHtml from "sanitize-html"
 
 import { useForm } from "~/components/hooks/use-form"
 import {
@@ -115,9 +116,10 @@ export async function action({ params, request }: ActionArgs) {
     throw new Error("Invalid user id submitted for sharing")
   })
 
+  const sanitizedTemplate = sanitizeHtml(template)
   await updateAsset({
     id: assetId,
-    src: template,
+    src: sanitizedTemplate,
     name,
     description,
     sharedUsers: validSharedUserIds,
