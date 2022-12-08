@@ -115,6 +115,7 @@ function buildMentee(overrides = {}) {
     agreementEndDate: faker.date
       .soon(faker.datatype.number({ min: 150, max: 180 }))
       .toISOString(),
+    status: "assigned", // initial status
     ...overrides,
   }
 

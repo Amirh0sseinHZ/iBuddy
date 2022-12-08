@@ -6,6 +6,19 @@ import type { CountryType } from "~/utils/country"
 import type { User } from "./user.server"
 import { Role } from "./user.server"
 
+export const MENTEE_STATUS = {
+  ASSIGNED: "assigned", // initial - when a mentee is created
+  CONTACTED: "contacted", // when a buddy has contacted their mentee
+  IN_TOUCH: "in_touch", // when the mentee responds and agrees to be mentored
+  ARRIVED: "arrived", // when the mentee arrives in the country
+  MET: "met", // when the buddy meets the mentee in person
+  REJECTED: "rejected", // when the mentee responds but disagrees to be mentored
+  UNRESPONSIVE: "unresponsive", // when the mentee does not respond at all
+  SERVED: "served", // when the mentorship contract finishes
+} as const
+
+export type MenteeStatus = typeof MENTEE_STATUS[keyof typeof MENTEE_STATUS]
+
 export type Mentee = Omit<User, "id" | "role" | "faculty"> & {
   id: ReturnType<typeof cuid>
   buddyId: User["id"]
@@ -14,6 +27,7 @@ export type Mentee = Omit<User, "id" | "role" | "faculty"> & {
   hostFaculty: string
   gender: "male" | "female"
   degree: "bachelor" | "master" | "others"
+  status: MenteeStatus
 }
 
 type MenteeItem = {
@@ -93,37 +107,18 @@ export async function getMenteeCount({
   return result.Count ?? 0
 }
 
-export async function createMentee({
-  buddyId,
-  countryCode,
-  email,
-  firstName,
-  lastName,
-  homeUniversity,
-  hostFaculty,
-  gender,
-  degree,
-  agreementStartDate,
-  agreementEndDate,
-}: Omit<Mentee, "id">): Promise<Mentee> {
+export async function createMentee(
+  newMentee: Omit<Mentee, "id" | "status">,
+): Promise<Mentee> {
   const id = cuid()
   const key = id2pk(id)
+  const status: MenteeStatus = "assigned"
   const db = await arc.tables()
   await db.mentees.put({
     pk: key,
     sk: key,
-    id,
-    buddyId,
-    countryCode,
-    email,
-    firstName: firstName.trim(),
-    lastName: lastName.trim(),
-    homeUniversity: homeUniversity.trim(),
-    hostFaculty: hostFaculty.trim(),
-    gender,
-    degree,
-    agreementStartDate,
-    agreementEndDate,
+    status,
+    ...newMentee,
   })
   const mentee = await getMenteeById(id)
   invariant(mentee, "Mentee not found, something went wrong")
@@ -137,6 +132,20 @@ export async function updateMentee(updatedMentee: Mentee): Promise<Mentee> {
     pk: key,
     sk: key,
     ...updatedMentee,
+  })
+}
+
+export async function updateMenteeStatus(
+  menteeId: Mentee["id"],
+  newStatus: Mentee["status"],
+) {
+  const key = id2pk(menteeId)
+  const db = await arc.tables()
+  await db.mentees.update({
+    Key: { pk: key, sk: key },
+    UpdateExpression: "set #status = :status",
+    ExpressionAttributeNames: { "#status": "status" },
+    ExpressionAttributeValues: { ":status": newStatus },
   })
 }
 

@@ -4,10 +4,10 @@ import invariant from "tiny-invariant"
 import { getMenteeCount } from "./mentee.server"
 
 export enum Role {
-  "BUDDY" = "0",
-  "HR" = "1",
-  "PRESIDENT" = "2",
-  "ADMIN" = "3",
+  BUDDY = "0",
+  HR = "1",
+  PRESIDENT = "2",
+  ADMIN = "3",
 }
 
 interface Contractor {
