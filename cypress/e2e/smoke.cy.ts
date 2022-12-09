@@ -10,7 +10,7 @@ describe("smoke tests", () => {
       cy.findByLabelText(/password/i).type(user.password)
       cy.findByRole("button", { name: /sign in/i }).click()
 
-      cy.findByRole("user-avatar", { timeout: 10000 }).click()
+      cy.findByRole("user-avatar", { timeout: 20000 }).click()
       cy.findByRole("button", { name: /sign out/i }).click()
       cy.findByRole("button", { name: /sign in/i })
     })
