@@ -1,5 +1,6 @@
 import { useMatches } from "@remix-run/react"
 import { useMemo } from "react"
+import type { MenteeStatus } from "~/models/mentee.server"
 
 /**
  * This base hook is used in other hooks to quickly search for specific data
@@ -16,4 +17,10 @@ export function useMatchesData(
     [matchingRoutes, id],
   )
   return route?.data
+}
+
+export function getHumanReadableMenteeStatus(status: MenteeStatus): string {
+  return status
+    .replace(/[^a-z]/gi, "")
+    .replace(/^\w/, match => match.toUpperCase())
 }

@@ -44,6 +44,7 @@ import { Role } from "~/models/user.server"
 import { PendingLink } from "~/components/link"
 import { useForm } from "~/components/hooks/use-form"
 import { validateAction, Zod } from "~/utils/validation"
+import { getHumanReadableMenteeStatus } from "~/utils/common"
 
 export async function loader({ request }: LoaderArgs) {
   const user = await requireUser(request)
@@ -293,7 +294,7 @@ export default function MenteesIndexPage() {
                     >
                       {statuses.map(status => (
                         <MenuItem key={status} value={status}>
-                          {getHumanReadableStatus(status)}
+                          {getHumanReadableMenteeStatus(status)}
                         </MenuItem>
                       ))}
                     </Select>
@@ -313,10 +314,4 @@ export default function MenteesIndexPage() {
       )}
     </>
   )
-}
-
-function getHumanReadableStatus(status: MenteeStatus): string {
-  return status
-    .replace(/[^a-z]/gi, "")
-    .replace(/^\w/, match => match.toUpperCase())
 }

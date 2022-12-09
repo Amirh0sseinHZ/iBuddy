@@ -18,6 +18,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  OutlinedInput,
 } from "@mui/material"
 import {
   Form,
@@ -28,12 +29,17 @@ import {
 
 import { useForm } from "~/components/hooks/use-form"
 import { validateAction, Zod } from "~/utils/validation"
-import { getMenteeById, updateMentee } from "~/models/mentee.server"
+import {
+  getMenteeById,
+  MENTEE_STATUS,
+  updateMentee,
+} from "~/models/mentee.server"
 import { requireUser } from "~/session.server"
 import { CountrySelect } from "~/components/country-select"
 import { getCountryCodeFromName, getCountryFromCode } from "~/utils/country"
 import { getBuddyByEmail, Role } from "~/models/user.server"
 import { useBuddyList } from "../../resources/buddies"
+import { getHumanReadableMenteeStatus } from "~/utils/common"
 
 export async function loader({ request, params }: LoaderArgs) {
   const user = await requireUser(request)
@@ -44,7 +50,7 @@ export async function loader({ request, params }: LoaderArgs) {
   invariant(menteeId, "Mentee ID is required")
   const mentee = await getMenteeById(menteeId)
   invariant(mentee, "Mentee not found")
-  return json({ mentee })
+  return json({ mentee, statuses: Object.values(MENTEE_STATUS) })
 }
 
 const schema = z
@@ -60,6 +66,7 @@ const schema = z
     degree: z.enum(["bachelor", "master", "others"]),
     gender: z.enum(["male", "female"]),
     buddyEmail: Zod.email(),
+    status: z.nativeEnum(MENTEE_STATUS),
   })
   .and(
     z
@@ -118,7 +125,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 }
 
 export default function EditMenteePage() {
-  const { mentee } = useLoaderData<typeof loader>()
+  const { mentee, statuses } = useLoaderData<typeof loader>()
   const { list: buddyList, isLoading: isBuddyListLoading } = useBuddyList()
   const actionData = useActionData()
   const { register } = useForm(actionData?.errors)
@@ -295,6 +302,24 @@ export default function EditMenteePage() {
                     {buddyList.map(buddy => (
                       <MenuItem key={buddy.id} value={buddy.email}>
                         {`${buddy.firstName} ${buddy.lastName}`}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth required>
+                  <InputLabel id="demo-dialog-select-label">Status</InputLabel>
+                  <Select
+                    defaultValue={mentee.status}
+                    labelId="demo-dialog-select-label"
+                    id="demo-dialog-select"
+                    input={<OutlinedInput label="Status" />}
+                    {...register("status")}
+                  >
+                    {statuses.map(status => (
+                      <MenuItem key={status} value={status}>
+                        {getHumanReadableMenteeStatus(status)}
                       </MenuItem>
                     ))}
                   </Select>

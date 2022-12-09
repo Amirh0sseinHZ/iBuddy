@@ -27,6 +27,7 @@ import { getUserById } from "~/models/user.server"
 import { requireUser } from "~/session.server"
 import { Box, Divider, Grid, Link, Paper, Typography } from "@mui/material"
 import { PendingLink } from "~/components/link"
+import { getHumanReadableMenteeStatus } from "~/utils/common"
 
 export async function loader({ params, request }: LoaderArgs) {
   const user = await requireUser(request)
@@ -260,6 +261,13 @@ export default function MenteePage() {
                 </Box>
                 {": "}
                 {new Date(mentee.agreementEndDate).toLocaleDateString()}
+              </Typography>
+              <Typography variant="body1" sx={{ mt: 1 }}>
+                <Box fontWeight="fontWeightMedium" display="inline">
+                  Status
+                </Box>
+                {": "}
+                {getHumanReadableMenteeStatus(mentee.status)}
               </Typography>
             </Box>
           </Grid>
