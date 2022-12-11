@@ -130,6 +130,7 @@ export async function action({ request }: ActionArgs) {
       subject: formData.subject,
       htmlBody: sanitizedBody,
       senderName: user.firstName,
+      replyTo: user.email,
     })
     return redirect("/dashboard/mentees")
   }
@@ -147,6 +148,7 @@ export async function action({ request }: ActionArgs) {
       subject: formData.subject,
       htmlBody: resolveBody({ body: sanitizedBody, recipient }),
       senderName: user.firstName,
+      replyTo: user.email,
     }),
   )
 

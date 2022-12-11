@@ -16,6 +16,7 @@ type SendEmailParams = {
   htmlBody: string
   subject: string
   senderName: string
+  replyTo: EmailAddress
 }
 
 export async function sendEmail({
@@ -24,12 +25,14 @@ export async function sendEmail({
   htmlBody,
   subject,
   senderName,
+  replyTo,
 }: SendEmailParams) {
   const sendEmailCommand = new SendEmailCommand({
     Destination: {
       CcAddresses: Array.isArray(cc) ? cc : [cc],
       ToAddresses: Array.isArray(to) ? to : [to],
     },
+    ReplyToAddresses: Array.isArray(replyTo) ? replyTo : [replyTo],
     Message: {
       Body: {
         Html: {
