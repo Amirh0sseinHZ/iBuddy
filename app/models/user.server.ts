@@ -102,8 +102,10 @@ export async function updateUser(updatedUser: Omit<User, "id">): Promise<User> {
 
 export async function deleteUser(id: UserId): Promise<void> {
   const db = await arc.tables()
-  await db.passwords.delete({ userId: id })
-  await db.users.delete({ id })
+  await Promise.all([
+    db.passwords.delete({ userId: id }),
+    db.users.delete({ id }),
+  ])
 }
 
 export async function deleteUserByEmail(email: UserEmail): Promise<void> {
@@ -135,20 +137,65 @@ export async function getBuddyByEmail(
   return isBuddyActive ? buddy : null
 }
 
+// export async function canUserDeleteUser({
+//   loggedInUser,
+//   userToDelete,
+// }: {
+//   loggedInUser: User
+//   userToDelete: User
+// }): Promise<boolean> {
+//   const isHigher = loggedInUser.role > userToDelete.role
+//   const isNotAdmin = userToDelete.role !== Role.ADMIN
+//   const isNotLoggedInUser = loggedInUser.id !== userToDelete.id
+//   const hasNoMentees =
+//     (await getMenteeCount({ buddyId: userToDelete.id })) === 0
+
+//   return isHigher && isNotAdmin && isNotLoggedInUser && hasNoMentees
+// }
+
 export async function canUserDeleteUser({
   loggedInUser,
   userToDelete,
 }: {
   loggedInUser: User
   userToDelete: User
-}): Promise<boolean> {
-  const isHigher = loggedInUser.role > userToDelete.role
-  const isNotAdmin = userToDelete.role !== Role.ADMIN
+}): Promise<{
+  canDelete: boolean
+  reason: string
+}> {
   const isNotLoggedInUser = loggedInUser.id !== userToDelete.id
+  if (!isNotLoggedInUser) {
+    return {
+      canDelete: false,
+      reason: "You can not delete yourself",
+    }
+  }
+  const isNotAdmin = userToDelete.role !== Role.ADMIN
+  if (!isNotAdmin) {
+    return {
+      canDelete: false,
+      reason: "You can not delete an admin",
+    }
+  }
+  const isHigher = loggedInUser.role > userToDelete.role
+  if (!isHigher) {
+    return {
+      canDelete: false,
+      reason: "You can only delete users with a lower role than you",
+    }
+  }
   const hasNoMentees =
     (await getMenteeCount({ buddyId: userToDelete.id })) === 0
-
-  return isHigher && isNotAdmin && isNotLoggedInUser && hasNoMentees
+  if (!hasNoMentees) {
+    return {
+      canDelete: false,
+      reason: "You can not delete a user with active mentees",
+    }
+  }
+  return {
+    canDelete: true,
+    reason: "",
+  }
 }
 
 export function isUserId(value: any): value is UserId {

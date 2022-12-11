@@ -1,13 +1,4 @@
 import {
-  Box,
-  Button,
-  Divider,
-  Grid,
-  Link,
-  Paper,
-  Typography,
-} from "@mui/material"
-import {
   Form,
   Link as RemixLink,
   useLoaderData,
@@ -19,6 +10,21 @@ import { json } from "@remix-run/server-runtime"
 import invariant from "tiny-invariant"
 
 import {
+  Box,
+  Button,
+  Divider,
+  Grid,
+  Link,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Paper,
+  Tooltip,
+  Typography,
+} from "@mui/material"
+
+import {
   canUserDeleteUser,
   deleteUserByEmail,
   getUserByEmail,
@@ -27,6 +33,9 @@ import { BackgroundLetterAvatars } from "~/components/avatar"
 import { UserRoleChip } from "~/components/chips"
 import { getMenteeListItems } from "~/models/mentee.server"
 import { requireUser } from "~/session.server"
+import { getHumanReadableMenteeStatus } from "~/utils/common"
+import { PendingLink } from "~/components/link"
+import { pick } from "~/utils/object"
 
 export async function loader({ params, request }: LoaderArgs) {
   const { email } = params
@@ -41,11 +50,25 @@ export async function loader({ params, request }: LoaderArgs) {
       userToDelete: userToShow,
     }),
   ])
+  const user = {
+    ...userToShow,
+    mentees: mentees.map(mentee =>
+      pick(mentee, "id", "status", "firstName", "lastName"),
+    ),
+  }
   return json({
-    user: {
-      ...userToShow,
-      mentees,
-    },
+    user: pick(
+      user,
+      "id",
+      "email",
+      "firstName",
+      "lastName",
+      "faculty",
+      "role",
+      "mentees",
+      "agreementStartDate",
+      "agreementEndDate",
+    ),
     canBeDeleted,
   })
 }
@@ -58,23 +81,26 @@ export async function action({ params, request }: ActionArgs) {
   const userToDelete = await getUserByEmail(email)
   invariant(userToDelete, "userToDelete not found")
 
-  const canBeDeleted = await canUserDeleteUser({
+  const { canDelete } = await canUserDeleteUser({
     loggedInUser,
     userToDelete,
   })
-  invariant(canBeDeleted, "User cannot be deleted")
+  invariant(canDelete, "User cannot be deleted")
 
   await deleteUserByEmail(email)
   return redirect("/dashboard/users")
 }
 
 export default function UserPage() {
-  const { user, canBeDeleted } = useLoaderData<typeof loader>()
+  const {
+    user,
+    canBeDeleted: { canDelete: canBeDeleted, reason: cannotDeleteReason },
+  } = useLoaderData<typeof loader>()
   const transition = useTransition()
-
   const isDeleting =
     transition.state !== "idle" && Boolean(transition.submission)
   const userFullName = `${user.firstName} ${user.lastName}`
+
   return (
     <Box sx={{ width: "100%", mt: 6 }}>
       <Paper sx={{ width: "100%", mb: 2 }}>
@@ -113,16 +139,18 @@ export default function UserPage() {
                   >
                     Edit
                   </Button>
-                  <Form method="post">
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      disabled={!canBeDeleted || isDeleting}
-                      type="submit"
-                    >
-                      {isDeleting ? "Deleting..." : "Delete"}
-                    </Button>
-                  </Form>
+                  <Tooltip title={cannotDeleteReason}>
+                    <Form method="post">
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        disabled={!canBeDeleted || isDeleting}
+                        type="submit"
+                      >
+                        {isDeleting ? "Deleting..." : "Delete"}
+                      </Button>
+                    </Form>
+                  </Tooltip>
                 </Box>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="body1" sx={{ mt: 1 }}>
@@ -155,32 +183,35 @@ export default function UserPage() {
                   {": "}
                   {new Date(user.agreementEndDate).toLocaleDateString()}
                 </Typography>
-                <Typography variant="body1" sx={{ mt: 1 }}>
-                  <Box fontWeight="fontWeightMedium" display="inline">
-                    Mentees
-                  </Box>
-                  {": "}
-                  {user.mentees.length}
-                </Typography>
               </Box>
             </Grid>
           </Grid>
-          <Grid item>
-            <Box sx={{ paddingX: 4 }}>
-              {/* render the list of mentees */}
-              <ul>
-                {user.mentees.map(mentee => (
-                  <li key={mentee.id}>
-                    <Link
-                      component={RemixLink}
-                      to={`/dashboard/mentees/${mentee.id}`}
-                    >
-                      {mentee.firstName} {mentee.lastName}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </Box>
+          <Grid item xs={12}>
+            <Typography variant="h5" sx={{ padding: 2 }}>
+              Mentees ({user.mentees.length})
+            </Typography>
+            <List sx={{ width: "100%", bgcolor: "background.paper" }}>
+              {user.mentees.map(mentee => {
+                const menteeFullName = `${mentee.firstName} ${mentee.lastName}`
+                return (
+                  <Link
+                    component={PendingLink}
+                    to={`/dashboard/mentees/${mentee.id}`}
+                    key={mentee.id}
+                  >
+                    <ListItem>
+                      <ListItemAvatar>
+                        <BackgroundLetterAvatars name={menteeFullName} />
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={menteeFullName}
+                        secondary={getHumanReadableMenteeStatus(mentee.status)}
+                      />
+                    </ListItem>
+                  </Link>
+                )
+              })}
+            </List>
           </Grid>
         </Grid>
       </Paper>

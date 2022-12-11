@@ -3,10 +3,10 @@ import * as React from "react"
 import type { LoaderArgs } from "@remix-run/node"
 import { json } from "@remix-run/node"
 import {
-  Link,
   useActionData,
   useFetcher,
   useLoaderData,
+  useSearchParams,
 } from "@remix-run/react"
 
 import Table from "@mui/material/Table"
@@ -33,6 +33,8 @@ import Select from "@mui/material/Select"
 import MenuItem from "@mui/material/MenuItem"
 import type { ChipProps } from "@mui/material/Chip"
 import Chip from "@mui/material/Chip"
+import Switch from "@mui/material/Switch"
+import FormControlLabel from "@mui/material/FormControlLabel"
 import { mdiInformationVariant } from "@mdi/js"
 import Icon from "@mdi/react"
 
@@ -53,9 +55,17 @@ import { getHumanReadableMenteeStatus } from "~/utils/common"
 
 export async function loader({ request }: LoaderArgs) {
   const user = await requireUser(request)
-  const mentees = await (user.role === Role.BUDDY
+  const url = new URL(request.url)
+  const onlyMine = url.searchParams.get("only_mine")
+  const onlyMineChecked = onlyMine ? onlyMine === "true" : true
+  const isBuddy = user.role === Role.BUDDY
+
+  const mentees = await (onlyMineChecked
+    ? getMenteeListItems({ buddyId: user.id })
+    : isBuddy
     ? getMenteeListItems({ buddyId: user.id })
     : getAllMentees())
+
   const list = mentees.map(mentee => {
     const country = getCountryFromCode(mentee.countryCode)
     return {
@@ -63,7 +73,11 @@ export async function loader({ request }: LoaderArgs) {
       country,
     }
   })
-  return json({ mentees: list, statuses: Object.values(MENTEE_STATUS) })
+  return json({
+    mentees: list,
+    statuses: Object.values(MENTEE_STATUS),
+    isBuddy,
+  })
 }
 
 const schema = z.object({
@@ -87,8 +101,20 @@ export async function action({ request }: LoaderArgs) {
 }
 
 export default function MenteesIndexPage() {
-  const { mentees, statuses } = useLoaderData<typeof loader>()
+  const { mentees, statuses, isBuddy } = useLoaderData<typeof loader>()
   const [query, setQuery] = React.useState("")
+
+  const [searchParams, setSearchParams] = useSearchParams()
+  const onlyMine = searchParams.get("only_mine")
+  const isOnlyMine = onlyMine ? onlyMine === "true" : true
+  const handleOnlyMineToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchParams(
+      { only_mine: event.target.checked ? "true" : "false" },
+      {
+        replace: false,
+      },
+    )
+  }
 
   const filteredMentees = mentees.filter(mentee => {
     const fullName = `${mentee.firstName} ${mentee.lastName}`
@@ -122,8 +148,7 @@ export default function MenteesIndexPage() {
   const isBusy = status.state !== "idle" && Boolean(status.submission)
 
   return (
-    <>
-      <Link to="/dashboard/mentees/email">Send an email</Link>
+    <div>
       <TextField
         autoFocus
         type="text"
@@ -137,6 +162,14 @@ export default function MenteesIndexPage() {
           backgroundColor: "background.grey01",
         }}
       />
+      {isBuddy ? null : (
+        <FormControlLabel
+          control={
+            <Switch checked={isOnlyMine} onChange={handleOnlyMineToggle} />
+          }
+          label="Only mine"
+        />
+      )}
       {filteredMentees.length === 0 ? (
         <p>No mentees found</p>
       ) : (
@@ -149,7 +182,6 @@ export default function MenteesIndexPage() {
                   <TableCell align="center">Country</TableCell>
                   <TableCell align="center">Home university</TableCell>
                   <TableCell align="center">Host faculty</TableCell>
-                  <TableCell align="center">Email address</TableCell>
                   <TableCell align="center">Gender</TableCell>
                   <TableCell align="center">Degree</TableCell>
                   <TableCell align="center">Status</TableCell>
@@ -246,7 +278,7 @@ export default function MenteesIndexPage() {
                           width="20"
                           src={`https://flagcdn.com/w20/${mentee.country?.code?.toLowerCase()}.png`}
                           srcSet={`https://flagcdn.com/w40/${mentee.country?.code?.toLowerCase()}.png 2x`}
-                          alt="No flag found"
+                          alt={mentee.country?.label}
                           title={mentee.country?.label}
                         />
                       </TableCell>
@@ -254,7 +286,6 @@ export default function MenteesIndexPage() {
                         {mentee.homeUniversity}
                       </TableCell>
                       <TableCell align="center">{mentee.hostFaculty}</TableCell>
-                      <TableCell align="center">{mentee.email}</TableCell>
                       <TableCell align="center">{mentee.gender}</TableCell>
                       <TableCell align="center">{mentee.degree}</TableCell>
                       <TableCell align="center">
@@ -318,6 +349,6 @@ export default function MenteesIndexPage() {
           </Dialog>
         </div>
       )}
-    </>
+    </div>
   )
 }

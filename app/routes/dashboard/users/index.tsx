@@ -12,10 +12,11 @@ import TableRow from "@mui/material/TableRow"
 import Paper from "@mui/material/Paper"
 import TextField from "@mui/material/TextField"
 
-import { getUserListItems } from "~/models/user.server"
+import { getUserListItems, Role } from "~/models/user.server"
 import { UserRoleChip } from "~/components/chips"
 import { getMenteeCount } from "~/models/mentee.server"
 import { PendingLink } from "~/components/link"
+import { pick } from "~/utils/object"
 
 export async function loader({ request }: LoaderArgs) {
   const users = await getUserListItems()
@@ -27,14 +28,34 @@ export async function loader({ request }: LoaderArgs) {
       }
     }),
   )
-  return json({ usersAndMenteeCounts })
+  const sortedUsers = usersAndMenteeCounts.sort((a, b) => {
+    const sortOrder = [Role.ADMIN, Role.PRESIDENT, Role.HR, Role.BUDDY]
+    if (sortOrder.indexOf(a.role) === sortOrder.indexOf(b.role)) {
+      return b.countOfMentees - a.countOfMentees
+    } else {
+      return sortOrder.indexOf(a.role) - sortOrder.indexOf(b.role)
+    }
+  })
+  return json({
+    users: sortedUsers.map(user =>
+      pick(
+        user,
+        "firstName",
+        "lastName",
+        "email",
+        "role",
+        "countOfMentees",
+        "faculty",
+      ),
+    ),
+  })
 }
 
 export default function UsersIndexPage() {
-  const { usersAndMenteeCounts } = useLoaderData<typeof loader>()
+  const { users } = useLoaderData<typeof loader>()
   const [query, setQuery] = React.useState("")
 
-  const filteredUsers = usersAndMenteeCounts.filter(user => {
+  const filteredUsers = users.filter(user => {
     const fullName = `${user.firstName} ${user.lastName}`
     return fullName.toLowerCase().includes(query.trim().toLowerCase())
   })
@@ -62,7 +83,6 @@ export default function UsersIndexPage() {
             <TableHead>
               <TableRow>
                 <TableCell>Name</TableCell>
-                <TableCell align="center">Email address</TableCell>
                 <TableCell align="center">Faculty</TableCell>
                 <TableCell align="center">Mentees</TableCell>
                 <TableCell align="center">Role</TableCell>
@@ -71,9 +91,9 @@ export default function UsersIndexPage() {
             <TableBody>
               {filteredUsers.map(user => {
                 return (
-                  <React.Fragment key={user.id}>
+                  <React.Fragment key={user.email}>
                     <TableRow
-                      id={user.id}
+                      id={user.email}
                       sx={{ "& > *": { borderBottom: "unset" } }}
                     >
                       <TableCell
@@ -85,7 +105,6 @@ export default function UsersIndexPage() {
                           {`${user.firstName} ${user.lastName}`}
                         </PendingLink>
                       </TableCell>
-                      <TableCell align="center">{user.email}</TableCell>
                       <TableCell align="center">{user.faculty}</TableCell>
                       <TableCell align="center">
                         {user.countOfMentees}

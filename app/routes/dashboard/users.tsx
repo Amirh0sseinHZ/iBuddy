@@ -1,15 +1,16 @@
-import type { LoaderArgs } from "@remix-run/node"
-import { redirect } from "@remix-run/node"
+import type { LoaderArgs, MetaFunction } from "@remix-run/node"
 import { Outlet } from "@remix-run/react"
 
-import { requireUser } from "~/session.server"
-import { Role } from "~/models/user.server"
+import { requireNonBuddyUser } from "~/session.server"
+
+export const meta: MetaFunction = () => {
+  return {
+    title: "User management",
+  }
+}
 
 export async function loader({ request }: LoaderArgs) {
-  const user = await requireUser(request)
-  if (user.role === Role.BUDDY) {
-    return redirect("/dashboard")
-  }
+  await requireNonBuddyUser(request)
   return null
 }
 

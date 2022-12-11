@@ -28,10 +28,15 @@ import {
   mdiViewDashboard,
   mdiAccountPlus,
   mdiAccountGroup,
+  mdiEmailPlus,
+  mdiAccountMultiple,
+  mdiFilePlus,
+  mdiFileDocumentMultiple,
+  mdiAccountSupervisorCircleOutline,
+  mdiAccountPlusOutline,
 } from "@mdi/js"
 
 import { requireUser } from "~/session.server"
-
 import { AppBar } from "~/components/dashboard/app-bar"
 import { BackgroundLetterAvatars } from "~/components/avatar"
 import { Drawer } from "~/components/dashboard/drawer"
@@ -40,7 +45,7 @@ import { Copyright } from "~/components/coypright"
 import { Role } from "~/models/user.server"
 import { UserRoleChip } from "~/components/chips"
 
-import styles from "~/styles/dashboard.css"
+import dashboardStyles from "~/styles/dashboard.css"
 
 export const meta: MetaFunction = () => {
   return {
@@ -52,7 +57,7 @@ export const links: LinksFunction = () => {
   return [
     {
       rel: "stylesheet",
-      href: styles,
+      href: dashboardStyles,
     },
   ]
 }
@@ -161,7 +166,11 @@ export default function DashboardRoute() {
             </MenuItem>
             <Divider />
             <MenuItem onClick={handleCloseUserMenu}>
-              <form action="/auth/signout" method="post">
+              <form
+                action="/auth/signout"
+                method="post"
+                style={{ width: "100%" }}
+              >
                 <Link
                   sx={theme => ({
                     color: theme.palette.text.primary,
@@ -229,6 +238,17 @@ export default function DashboardRoute() {
               </ListItemButton>
             </PendingNavLink>
           ) : null}
+          <PendingNavLink
+            to="/dashboard/mentees/email"
+            activeClassName={linkActiveClassName}
+          >
+            <ListItemButton>
+              <ListItemIcon>
+                <Icon path={mdiEmailPlus} size={1} />
+              </ListItemIcon>
+              <ListItemText primary="Send email" />
+            </ListItemButton>
+          </PendingNavLink>
           {!isBuddy ? (
             <>
               <Divider sx={{ my: 1 }} />
@@ -241,7 +261,7 @@ export default function DashboardRoute() {
               >
                 <ListItemButton>
                   <ListItemIcon>
-                    <Icon path={mdiAccountGroup} size={1} />
+                    <Icon path={mdiAccountSupervisorCircleOutline} size={1} />
                   </ListItemIcon>
                   <ListItemText primary="Users" />
                 </ListItemButton>
@@ -252,7 +272,7 @@ export default function DashboardRoute() {
               >
                 <ListItemButton>
                   <ListItemIcon>
-                    <Icon path={mdiAccountPlus} size={1} />
+                    <Icon path={mdiAccountPlusOutline} size={1} />
                   </ListItemIcon>
                   <ListItemText primary="New user" />
                 </ListItemButton>
@@ -269,7 +289,7 @@ export default function DashboardRoute() {
           >
             <ListItemButton>
               <ListItemIcon>
-                <Icon path={mdiAccountGroup} size={1} />
+                <Icon path={mdiFileDocumentMultiple} size={1} />
               </ListItemIcon>
               <ListItemText primary="Assets" />
             </ListItemButton>
@@ -280,7 +300,7 @@ export default function DashboardRoute() {
           >
             <ListItemButton>
               <ListItemIcon>
-                <Icon path={mdiAccountPlus} size={1} />
+                <Icon path={mdiFilePlus} size={1} />
               </ListItemIcon>
               <ListItemText primary="New asset" />
             </ListItemButton>

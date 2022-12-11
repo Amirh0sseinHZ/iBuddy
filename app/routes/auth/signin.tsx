@@ -1,7 +1,7 @@
+import * as z from "zod"
 import type { ActionFunction, MetaFunction } from "@remix-run/node"
 import { json } from "@remix-run/node"
 import { Form, Link, useActionData, useTransition } from "@remix-run/react"
-import * as z from "zod"
 
 import {
   TextField,
@@ -22,6 +22,52 @@ import { validateAction, Zod } from "~/utils/validation"
 import { safeRedirect, useRedirectToValue } from "~/utils/redirect"
 import { useForm } from "~/components/hooks/use-form"
 import { Copyright } from "~/components/coypright"
+
+export const meta: MetaFunction = () => {
+  return {
+    title: "Sign In",
+  }
+}
+
+const schema = z.object({
+  email: Zod.email(),
+  password: z
+    .string({
+      required_error: "Password is required",
+    })
+    .min(1, "Password is required"),
+  remember: z.enum(["on"]).optional(),
+  redirectTo: z.string().optional(),
+})
+
+type ActionInput = z.TypeOf<typeof schema>
+
+export const action: ActionFunction = async ({ request }) => {
+  const { formData, errors } = await validateAction<ActionInput>({
+    request,
+    schema,
+  })
+  if (errors) {
+    return json({ errors }, { status: 400 })
+  }
+  const { email, password, remember, redirectTo: unsafeRedirectTo } = formData
+  const redirectTo = safeRedirect(unsafeRedirectTo)
+
+  const user = await verifyLogin(email, password)
+
+  if (!user) {
+    return json(
+      { errors: { email: "Invalid email or password" } },
+      { status: 400 },
+    )
+  }
+  return createUserSession({
+    request,
+    userId: user.id,
+    remember: remember === "on",
+    redirectTo,
+  })
+}
 
 export default function SignInPage() {
   const redirectTo = useRedirectToValue()
@@ -92,50 +138,4 @@ export default function SignInPage() {
       <Copyright sx={{ mt: 8, mb: 4 }} />
     </Container>
   )
-}
-
-const schema = z.object({
-  email: Zod.email(),
-  password: z
-    .string({
-      required_error: "Password is required",
-    })
-    .min(1, "Password is required"),
-  remember: z.enum(["on"]).optional(),
-  redirectTo: z.string().optional(),
-})
-
-type ActionInput = z.TypeOf<typeof schema>
-
-export const action: ActionFunction = async ({ request }) => {
-  const { formData, errors } = await validateAction<ActionInput>({
-    request,
-    schema,
-  })
-  if (errors) {
-    return json({ errors }, { status: 400 })
-  }
-  const { email, password, remember, redirectTo: unsafeRedirectTo } = formData
-  const redirectTo = safeRedirect(unsafeRedirectTo)
-
-  const user = await verifyLogin(email, password)
-
-  if (!user) {
-    return json(
-      { errors: { email: "Invalid email or password" } },
-      { status: 400 },
-    )
-  }
-  return createUserSession({
-    request,
-    userId: user.id,
-    remember: remember === "on",
-    redirectTo,
-  })
-}
-
-export const meta: MetaFunction = () => {
-  return {
-    title: "Sign In",
-  }
 }
