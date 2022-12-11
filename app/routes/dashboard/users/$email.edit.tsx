@@ -3,6 +3,7 @@ import type {
   ActionFunction,
   LoaderArgs,
   MetaFunction,
+  SerializeFrom,
 } from "@remix-run/server-runtime"
 import { redirect } from "@remix-run/server-runtime"
 import { json } from "@remix-run/server-runtime"
