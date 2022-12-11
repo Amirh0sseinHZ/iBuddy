@@ -3,6 +3,7 @@ import {
   useActionData,
   useFetcher,
   useLoaderData,
+  useSearchParams,
   useSubmit,
   useTransition,
 } from "@remix-run/react"
@@ -43,6 +44,7 @@ import {
   resolveBody,
   sendEmail,
 } from "~/utils/email-service"
+import invariant from "tiny-invariant"
 
 const ReactQuill = React.lazy(() => import("react-quill"))
 
@@ -102,31 +104,30 @@ export async function action({ request }: ActionArgs) {
   if (errors) {
     return json({ errors }, { status: 400 })
   }
-  const recipientIds = formData.recipients.split(",").map(s => s.trim())
+  const recipientEmails = formData.recipients.split(",").map(s => s.trim())
   const userMentees = await getMenteeListItems({ buddyId: user.id })
-  const userMenteeIds = userMentees.reduce(
+  const userMenteeEmails = userMentees.reduce(
     (acc: Record<Mentee["id"], boolean>, curr) => {
-      acc[curr.id] = true
+      acc[curr.email] = true
       return acc
     },
     {},
   )
-  const areRecipientsValid = recipientIds.every(id => userMenteeIds[id])
+  const areRecipientsValid = recipientEmails.every(
+    email => userMenteeEmails[email],
+  )
   if (!areRecipientsValid) {
     return json(
       { errors: { recipients: "Invalid recipients" } },
       { status: 400 },
     )
   }
-  const recipients = userMentees.filter(mentee =>
-    recipientIds.includes(mentee.id),
-  )
   const sanitizedBody = sanitizeHtml(formData.body)
   const bodyVariables = sanitizedBody.match(/{{\s*[\w.]+\s*}}/g)
 
   if (!bodyVariables) {
     await sendEmail({
-      to: recipients.map(recipient => recipient.email),
+      to: recipientEmails,
       subject: formData.subject,
       htmlBody: sanitizedBody,
       senderName: user.firstName,
@@ -142,15 +143,17 @@ export async function action({ request }: ActionArgs) {
     )
   }
 
-  const promises = recipients.map(recipient =>
-    sendEmail({
-      to: recipient.email,
+  const promises = recipientEmails.map(email => {
+    const recipient = userMentees.find(mentee => mentee.email === email)
+    invariant(recipient, "Recipient not found")
+    return sendEmail({
+      to: email,
       subject: formData.subject,
       htmlBody: resolveBody({ body: sanitizedBody, recipient }),
       senderName: user.firstName,
       replyTo: user.email,
-    }),
-  )
+    })
+  })
 
   await Promise.all(promises)
   return redirect("/dashboard/mentees")
@@ -184,6 +187,13 @@ export default function EmailPage() {
     setEditorContent("")
   }
 
+  const [searchParams] = useSearchParams()
+  const [recipients, setRecipients] = React.useState(() => {
+    return searchParams.get("to")?.split(",") || []
+  })
+  const to = recipients.join(",")
+  useUpdateQueryStringValueWithoutNavigation("to", to)
+
   React.useEffect(() => {
     if (template) {
       setEditorContent(template)
@@ -207,14 +217,15 @@ export default function EmailPage() {
         <Select
           labelId="recipients-label"
           id="recipients"
-          defaultValue={[]}
+          defaultValue={recipients}
           input={<OutlinedInput label="To" />}
           disabled={isMenteeListLoading}
+          onChange={e => setRecipients(e.target.value as string[])}
           multiple
           {...register("recipients")}
         >
           {menteeList.map(mentee => (
-            <MenuItem key={mentee.id} value={mentee.id}>
+            <MenuItem key={mentee.id} value={mentee.email}>
               {mentee.firstName} {mentee.lastName}
             </MenuItem>
           ))}
@@ -260,4 +271,24 @@ export default function EmailPage() {
       </Button>
     </form>
   )
+}
+
+function useUpdateQueryStringValueWithoutNavigation(
+  queryKey: string,
+  queryValue: string,
+) {
+  React.useEffect(() => {
+    const currentSearchParams = new URLSearchParams(window.location.search)
+    const oldQuery = currentSearchParams.get(queryKey) ?? ""
+    if (queryValue === oldQuery) return
+    if (queryValue) {
+      currentSearchParams.set(queryKey, queryValue)
+    } else {
+      currentSearchParams.delete(queryKey)
+    }
+    const newUrl = [window.location.pathname, currentSearchParams.toString()]
+      .filter(Boolean)
+      .join("?")
+    window.history.replaceState(null, "", newUrl)
+  }, [queryKey, queryValue])
 }

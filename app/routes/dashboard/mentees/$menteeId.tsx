@@ -33,6 +33,7 @@ import { requireUser } from "~/session.server"
 import { Box, Divider, Grid, Link, Paper, Typography } from "@mui/material"
 import { PendingLink } from "~/components/link"
 import { getHumanReadableMenteeStatus } from "~/utils/common"
+import { GenderIcon } from "~/components/icons"
 
 export const meta: MetaFunction = ({ data }) => {
   const { mentee } = data as SerializeFrom<typeof loader>
@@ -211,14 +212,17 @@ export default function MenteePage() {
                   Gender
                 </Box>
                 {": "}
-                {mentee.gender}
+                <GenderIcon gender={mentee.gender} />
               </Typography>
               <Typography variant="body1" sx={{ mt: 1 }}>
                 <Box fontWeight="fontWeightMedium" display="inline">
                   Email
                 </Box>
                 {": "}
-                <Link target="_blank" href={`mailto:${mentee.email}`}>
+                <Link
+                  component={RemixLink}
+                  to={`/dashboard/mentees/email/?to=${mentee.email}`}
+                >
                   {mentee.email}
                 </Link>
               </Typography>

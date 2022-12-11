@@ -52,6 +52,7 @@ import { PendingLink } from "~/components/link"
 import { useForm } from "~/components/hooks/use-form"
 import { validateAction, Zod } from "~/utils/validation"
 import { getHumanReadableMenteeStatus } from "~/utils/common"
+import { GenderIcon } from "~/components/icons"
 
 export async function loader({ request }: LoaderArgs) {
   const user = await requireUser(request)
@@ -286,7 +287,9 @@ export default function MenteesIndexPage() {
                         {mentee.homeUniversity}
                       </TableCell>
                       <TableCell align="center">{mentee.hostFaculty}</TableCell>
-                      <TableCell align="center">{mentee.gender}</TableCell>
+                      <TableCell align="center">
+                        <GenderIcon gender={mentee.gender} />
+                      </TableCell>
                       <TableCell align="center">{mentee.degree}</TableCell>
                       <TableCell align="center">
                         <Tooltip title={menteeChip.tooltip} placement="left">

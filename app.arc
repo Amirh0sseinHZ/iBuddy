@@ -5,12 +5,18 @@ iBuddy
 region eu-central-1
 timeout 15
 
+@plugins
+architect/plugin-storage-private
+
 @http
 /*
   method any
   src server
 
 @static
+
+@storage-private
+useruploads
 
 @tables
 users
