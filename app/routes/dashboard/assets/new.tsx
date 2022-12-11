@@ -131,7 +131,7 @@ export async function action({ request }: ActionArgs) {
 
   switch (type) {
     case "file": {
-      const isProduction = process.env.NODE_ENV !== "production"
+      const isProduction = process.env.NODE_ENV === "production"
       const uploadHandler = (
         isProduction ? createS3FileUploadHandler : createLocalFileUploadHandler
       )({
