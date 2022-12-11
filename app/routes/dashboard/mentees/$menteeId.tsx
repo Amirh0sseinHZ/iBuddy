@@ -6,7 +6,12 @@ import {
   useTransition,
   Link as RemixLink,
 } from "@remix-run/react"
-import type { ActionArgs, LoaderArgs } from "@remix-run/server-runtime"
+import type {
+  ActionArgs,
+  LoaderArgs,
+  MetaFunction,
+  SerializeFrom,
+} from "@remix-run/server-runtime"
 import { redirect } from "@remix-run/server-runtime"
 import { json } from "@remix-run/server-runtime"
 import invariant from "tiny-invariant"
@@ -28,6 +33,14 @@ import { requireUser } from "~/session.server"
 import { Box, Divider, Grid, Link, Paper, Typography } from "@mui/material"
 import { PendingLink } from "~/components/link"
 import { getHumanReadableMenteeStatus } from "~/utils/common"
+
+export const meta: MetaFunction = ({ data }) => {
+  const { mentee } = data as SerializeFrom<typeof loader>
+  const menteeFullName = `${mentee.firstName} ${mentee.lastName}`
+  return {
+    title: `${menteeFullName} - iBuddy`,
+  }
+}
 
 export async function loader({ params, request }: LoaderArgs) {
   const user = await requireUser(request)

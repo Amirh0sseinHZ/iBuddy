@@ -14,7 +14,12 @@ import {
   useSubmit,
   useTransition,
 } from "@remix-run/react"
-import type { ActionArgs, LoaderArgs } from "@remix-run/server-runtime"
+import type {
+  ActionArgs,
+  LoaderArgs,
+  MetaFunction,
+  SerializeFrom,
+} from "@remix-run/server-runtime"
 import { redirect } from "@remix-run/server-runtime"
 import { json } from "@remix-run/server-runtime"
 import invariant from "tiny-invariant"
@@ -33,6 +38,13 @@ import { validateAction, Zod } from "~/utils/validation"
 import { getUserById, isUserId } from "~/models/user.server"
 
 const ReactQuill = React.lazy(() => import("react-quill"))
+
+export const meta: MetaFunction = ({ data }) => {
+  const { asset } = data as SerializeFrom<typeof loader>
+  return {
+    title: `Edit ${asset.name} - iBuddy`,
+  }
+}
 
 export async function loader({ params, request }: LoaderArgs) {
   const user = await requireUser(request)

@@ -1,5 +1,10 @@
 import * as z from "zod"
-import type { ActionFunction, LoaderArgs } from "@remix-run/node"
+import type {
+  ActionFunction,
+  LoaderArgs,
+  MetaFunction,
+  SerializeFrom,
+} from "@remix-run/node"
 import { redirect } from "@remix-run/node"
 import { json } from "@remix-run/node"
 import invariant from "tiny-invariant"
@@ -40,6 +45,14 @@ import { getCountryCodeFromName, getCountryFromCode } from "~/utils/country"
 import { getBuddyByEmail, Role } from "~/models/user.server"
 import { useBuddyList } from "../../resources/buddies"
 import { getHumanReadableMenteeStatus } from "~/utils/common"
+
+export const meta: MetaFunction = ({ data }) => {
+  const { mentee } = data as SerializeFrom<typeof loader>
+  const menteeFullName = `${mentee.firstName} ${mentee.lastName}`
+  return {
+    title: `Edit ${menteeFullName} - iBuddy`,
+  }
+}
 
 export async function loader({ request, params }: LoaderArgs) {
   const user = await requireUser(request)

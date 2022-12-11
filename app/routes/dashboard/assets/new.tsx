@@ -1,5 +1,5 @@
 import * as z from "zod"
-import type { ActionArgs } from "@remix-run/server-runtime"
+import type { ActionArgs, MetaFunction } from "@remix-run/server-runtime"
 import { redirect } from "@remix-run/server-runtime"
 import { json } from "@remix-run/server-runtime"
 import type {
@@ -45,6 +45,12 @@ import * as React from "react"
 import { CircularProgress } from "@mui/material"
 
 const ReactQuill = React.lazy(() => import("react-quill"))
+
+export const meta: MetaFunction = () => {
+  return {
+    title: "New Asset - iBuddy",
+  }
+}
 
 const UPLOAD_FIELD_NAME = "file"
 const MAX_FILE_SIZE_IN_BYTES = 1024 * 1024 * 10 // 10MB

@@ -1,5 +1,5 @@
 import * as z from "zod"
-import type { ActionFunction, LoaderArgs } from "@remix-run/node"
+import type { ActionFunction, LoaderArgs, MetaFunction } from "@remix-run/node"
 import { redirect } from "@remix-run/node"
 import { json } from "@remix-run/node"
 
@@ -25,6 +25,12 @@ import { useForm } from "~/components/hooks/use-form"
 import { validateAction, Zod } from "~/utils/validation"
 import { requireUser } from "~/session.server"
 import { createUser, Role } from "~/models/user.server"
+
+export const meta: MetaFunction = () => {
+  return {
+    title: "New user - iBuddy",
+  }
+}
 
 export async function loader({ request }: LoaderArgs) {
   const user = await requireUser(request)

@@ -5,7 +5,7 @@ import { requireNonBuddyUser } from "~/session.server"
 
 export const meta: MetaFunction = () => {
   return {
-    title: "User management",
+    title: "User management - iBuddy",
   }
 }
 

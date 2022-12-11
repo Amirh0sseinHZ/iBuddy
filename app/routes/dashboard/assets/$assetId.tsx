@@ -1,6 +1,11 @@
 import Button from "@mui/material/Button"
 import { Form, Link, useLoaderData } from "@remix-run/react"
-import type { ActionArgs, LoaderArgs } from "@remix-run/server-runtime"
+import type {
+  ActionArgs,
+  LoaderArgs,
+  MetaFunction,
+  SerializeFrom,
+} from "@remix-run/server-runtime"
 import { redirect } from "@remix-run/server-runtime"
 import { json } from "@remix-run/server-runtime"
 import invariant from "tiny-invariant"
@@ -11,6 +16,13 @@ import { deleteAsset, canUserViewAsset } from "~/models/asset.server"
 import { getAssetById } from "~/models/asset.server"
 import { requireUser } from "~/session.server"
 import { getSignedUrl } from "~/utils/s3"
+
+export const meta: MetaFunction = ({ data }) => {
+  const { asset } = data as SerializeFrom<typeof loader>
+  return {
+    title: `${asset.name} - iBuddy`,
+  }
+}
 
 async function resolveImageAssetUrl(asset: Asset) {
   switch (asset.host) {

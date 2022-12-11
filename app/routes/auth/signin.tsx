@@ -25,7 +25,7 @@ import { Copyright } from "~/components/coypright"
 
 export const meta: MetaFunction = () => {
   return {
-    title: "Sign In",
+    title: "Sign In - iBuddy",
   }
 }
 

@@ -10,6 +10,7 @@ import type {
   ActionArgs,
   LinksFunction,
   LoaderArgs,
+  MetaFunction,
 } from "@remix-run/server-runtime"
 import { redirect } from "@remix-run/server-runtime"
 import { json } from "@remix-run/server-runtime"
@@ -38,14 +39,18 @@ import type { Mentee } from "~/models/mentee.server"
 import { getMenteeListItems } from "~/models/mentee.server"
 import sanitizeHtml from "sanitize-html"
 import {
-  ALLOWED_VARIABLES,
   areAllowedVariables,
   resolveBody,
   sendEmail,
 } from "~/utils/email-service"
-import invariant from "tiny-invariant"
 
 const ReactQuill = React.lazy(() => import("react-quill"))
+
+export const meta: MetaFunction = () => {
+  return {
+    title: "Send email - iBuddy",
+  }
+}
 
 export const links: LinksFunction = () => {
   return [

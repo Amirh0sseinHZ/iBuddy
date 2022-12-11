@@ -1,5 +1,5 @@
 import * as z from "zod"
-import type { ActionFunction, LoaderArgs } from "@remix-run/node"
+import type { ActionFunction, LoaderArgs, MetaFunction } from "@remix-run/node"
 import { redirect } from "@remix-run/node"
 import { json } from "@remix-run/node"
 import invariant from "tiny-invariant"
@@ -29,6 +29,12 @@ import { CountrySelect } from "~/components/country-select"
 import { getCountryCodeFromName } from "~/utils/country"
 import { getBuddyByEmail, Role } from "~/models/user.server"
 import { useBuddyList } from "../../resources/buddies"
+
+export const meta: MetaFunction = () => {
+  return {
+    title: "New mentee - iBuddy",
+  }
+}
 
 export async function loader({ request }: LoaderArgs) {
   const user = await requireUser(request)

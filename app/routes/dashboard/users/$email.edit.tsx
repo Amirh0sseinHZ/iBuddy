@@ -1,5 +1,9 @@
 import * as z from "zod"
-import type { ActionFunction, LoaderArgs } from "@remix-run/server-runtime"
+import type {
+  ActionFunction,
+  LoaderArgs,
+  MetaFunction,
+} from "@remix-run/server-runtime"
 import { redirect } from "@remix-run/server-runtime"
 import { json } from "@remix-run/server-runtime"
 import {
@@ -26,6 +30,14 @@ import { requireUser } from "~/session.server"
 import { getUserByEmail, Role, updateUser } from "~/models/user.server"
 import { validateAction, Zod } from "~/utils/validation"
 import { useForm } from "~/components/hooks/use-form"
+
+export const meta: MetaFunction = ({ data }) => {
+  const { user } = data as SerializeFrom<typeof loader>
+  const userFullName = `${user.firstName} ${user.lastName}`
+  return {
+    title: `Edit ${userFullName} - iBuddy`,
+  }
+}
 
 export async function loader({ request, params }: LoaderArgs) {
   const { email } = params

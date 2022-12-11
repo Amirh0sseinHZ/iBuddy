@@ -3,7 +3,7 @@ import type { MetaFunction } from "@remix-run/server-runtime"
 
 export const meta: MetaFunction = () => {
   return {
-    title: "Mentee management",
+    title: "Mentee management - iBuddy",
   }
 }
 

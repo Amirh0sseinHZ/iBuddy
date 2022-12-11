@@ -4,7 +4,12 @@ import {
   useLoaderData,
   useTransition,
 } from "@remix-run/react"
-import type { ActionArgs, LoaderArgs } from "@remix-run/server-runtime"
+import type {
+  ActionArgs,
+  LoaderArgs,
+  MetaFunction,
+  SerializeFrom,
+} from "@remix-run/server-runtime"
 import { redirect } from "@remix-run/server-runtime"
 import { json } from "@remix-run/server-runtime"
 import invariant from "tiny-invariant"
@@ -36,6 +41,14 @@ import { requireUser } from "~/session.server"
 import { getHumanReadableMenteeStatus } from "~/utils/common"
 import { PendingLink } from "~/components/link"
 import { pick } from "~/utils/object"
+
+export const meta: MetaFunction = ({ data }) => {
+  const { user } = data as SerializeFrom<typeof loader>
+  const userFullName = `${user.firstName} ${user.lastName}`
+  return {
+    title: `${userFullName} - iBuddy`,
+  }
+}
 
 export async function loader({ params, request }: LoaderArgs) {
   const { email } = params
