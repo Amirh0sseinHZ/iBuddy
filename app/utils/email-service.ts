@@ -1,3 +1,4 @@
+import type { Mentee } from "./../models/mentee.server"
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses"
 import invariant from "tiny-invariant"
 
@@ -45,7 +46,40 @@ export async function sendEmail({
         Data: subject,
       },
     },
-    Source: `${senderName} <${SES_EMAIL_SOURCE}>`,
+    Source: `=?UTF-8?B?${Buffer.from(senderName).toString(
+      "base64",
+    )}?= <${SES_EMAIL_SOURCE}>`,
   })
   return await client.send(sendEmailCommand)
+}
+
+export const ALLOWED_VARIABLES: Array<keyof Mentee> = [
+  "firstName",
+  "lastName",
+  "email",
+  "gender",
+  "degree",
+]
+
+export function resolveBody({
+  body,
+  recipient,
+}: {
+  body: string
+  recipient: Mentee
+}) {
+  return ALLOWED_VARIABLES.reduce((acc, key) => {
+    const searchValue = `{{${key}}}`
+    const replaceValue = recipient[key]
+    return acc.replaceAll(searchValue, replaceValue)
+  }, body)
+}
+
+export function areAllowedVariables(
+  some: string[],
+): some is typeof ALLOWED_VARIABLES {
+  return some.every(key => {
+    const keyWithoutMustaches = key.slice(2, -2)
+    return ALLOWED_VARIABLES.includes(keyWithoutMustaches as any)
+  })
 }

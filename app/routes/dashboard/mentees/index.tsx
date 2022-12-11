@@ -2,7 +2,12 @@ import * as z from "zod"
 import * as React from "react"
 import type { LoaderArgs } from "@remix-run/node"
 import { json } from "@remix-run/node"
-import { useActionData, useFetcher, useLoaderData } from "@remix-run/react"
+import {
+  Link,
+  useActionData,
+  useFetcher,
+  useLoaderData,
+} from "@remix-run/react"
 
 import Table from "@mui/material/Table"
 import TableBody from "@mui/material/TableBody"
@@ -118,6 +123,7 @@ export default function MenteesIndexPage() {
 
   return (
     <>
+      <Link to="/dashboard/mentees/email">Send an email</Link>
       <TextField
         autoFocus
         type="text"

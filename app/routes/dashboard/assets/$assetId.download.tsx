@@ -33,7 +33,6 @@ export async function loader({ params, request }: LoaderArgs) {
         `http://localhost:3000/_static/uploads/${asset.src}`,
       )
       pdfBlob = await response.blob()
-      console.log("🚀 ~ loader ~ response", response)
       break
     }
     default: {

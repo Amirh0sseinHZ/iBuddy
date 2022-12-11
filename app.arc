@@ -3,6 +3,7 @@ iBuddy
 
 @aws
 region eu-central-1
+timeout 15
 
 @http
 /*

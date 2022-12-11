@@ -1,4 +1,5 @@
 import arc from "@architect/functions"
+import type { ArcTable } from "@architect/functions/tables"
 import cuid from "cuid"
 import invariant from "tiny-invariant"
 import { destroyS3File } from "~/utils/s3"
@@ -30,19 +31,37 @@ export async function getUserAssets(ownerId: User["id"]): Promise<Asset[]> {
 }
 
 export async function getUserAccessibleAssets(
-  ownerId: User["id"],
+  ownerId: Asset["ownerId"],
+  { type }: { type?: Asset["type"] } = {},
 ): Promise<Asset[]> {
-  const db = await arc.tables()
-  const result = await db.assets.scan({
+  type ScanParams = Parameters<ArcTable["scan"]>[0]
+  const params: ScanParams = {
     FilterExpression: "ownerId = :ownerId or contains(sharedUsers, :ownerId)",
     ExpressionAttributeValues: { ":ownerId": ownerId },
-  })
+  }
+  if (type) {
+    params.FilterExpression += " and #type = :type"
+    params.ExpressionAttributeNames = { "#type": "type" }
+    params.ExpressionAttributeValues[":type"] = type
+  }
+  const db = await arc.tables()
+  const result = await db.assets.scan(params)
   return result.Items
 }
 
 export async function getAllAssets(): Promise<Asset[]> {
   const db = await arc.tables()
   const result = await db.assets.scan({})
+  return result.Items
+}
+
+export async function getAllEmailTemplates(): Promise<Asset[]> {
+  const db = await arc.tables()
+  const result = await db.assets.scan({
+    FilterExpression: "#type = :type",
+    ExpressionAttributeNames: { "#type": "type" },
+    ExpressionAttributeValues: { ":type": "email-template" },
+  })
   return result.Items
 }
 

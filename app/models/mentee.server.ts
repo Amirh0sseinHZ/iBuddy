@@ -117,6 +117,7 @@ export async function createMentee(
   await db.mentees.put({
     pk: key,
     sk: key,
+    id,
     status,
     ...newMentee,
   })
