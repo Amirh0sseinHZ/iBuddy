@@ -24,7 +24,7 @@ import {
 import { useForm } from "~/components/hooks/use-form"
 import { validateAction, Zod } from "~/utils/validation"
 import { requireUser } from "~/session.server"
-import { createUser, Role } from "~/models/user.server"
+import { createUser, isEmailUnique, Role } from "~/models/user.server"
 
 export const meta: MetaFunction = () => {
   return {
@@ -63,7 +63,9 @@ const schema = z
   .object({
     firstName: Zod.name("First name"),
     lastName: Zod.name("Last name"),
-    email: Zod.email(),
+    email: Zod.email().refine(isEmailUnique, {
+      message: "This email is already taken",
+    }),
     faculty: Zod.requiredString("Faculty"),
     agreementStartDate: Zod.dateString("Start date"),
     agreementEndDate: Zod.dateString("End date"),

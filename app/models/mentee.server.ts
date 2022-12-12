@@ -120,6 +120,7 @@ export async function createMentee(
     id,
     status,
     ...newMentee,
+    email: newMentee.email.toLowerCase(),
   })
   const mentee = await getMenteeById(id)
   invariant(mentee, "Mentee not found, something went wrong")
@@ -160,6 +161,17 @@ export async function deleteMentee(menteeId: Mentee["id"]): Promise<void> {
       db.mentees.delete({ pk: key, sk: id2NoteSk(note.id) }),
     ),
   ])
+}
+
+export async function isEmailUnique(email: Mentee["email"]): Promise<boolean> {
+  const db = await arc.tables()
+  const result = await db.mentees.query({
+    IndexName: "menteeByEmail",
+    KeyConditionExpression: "email = :email",
+    ExpressionAttributeValues: { ":email": email },
+    Select: "COUNT",
+  })
+  return result.Count === 0
 }
 
 export async function getNotesOfMentee(

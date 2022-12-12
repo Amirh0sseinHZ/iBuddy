@@ -42,7 +42,8 @@ import {
 import { requireUser } from "~/session.server"
 import { CountrySelect } from "~/components/country-select"
 import { getCountryCodeFromName, getCountryFromCode } from "~/utils/country"
-import { getBuddyByEmail, Role } from "~/models/user.server"
+import type { User } from "~/models/user.server"
+import { getBuddyById, Role } from "~/models/user.server"
 import { useBuddyList } from "../../resources/buddies"
 import { getHumanReadableMenteeStatus } from "~/utils/common"
 
@@ -78,7 +79,9 @@ const schema = z
     agreementEndDate: Zod.dateString("End date"),
     degree: z.enum(["bachelor", "master", "others"]),
     gender: z.enum(["male", "female"]),
-    buddyEmail: Zod.email(),
+    buddyId: z.string().refine(id => getBuddyById(id as User["id"]), {
+      message: "Buddy does not exist",
+    }),
     status: z.nativeEnum(MENTEE_STATUS),
   })
   .and(
@@ -119,19 +122,17 @@ export const action: ActionFunction = async ({ request, params }) => {
   if (errors) {
     return json({ errors }, { status: 400 })
   }
-  const { country, buddyEmail, ...restOfForm } = formData
+  const { country, buddyId, ...restOfForm } = formData
   const countryCode = getCountryCodeFromName(country)
   if (!countryCode) {
     return json({ errors: { country: "Invalid country" } }, { status: 400 })
   }
-  const buddy = await getBuddyByEmail(buddyEmail)
-  invariant(buddy, "Buddy does not exist")
   const { menteeId } = params
   invariant(menteeId, "Mentee ID is required")
   const mentee = await updateMentee({
     id: menteeId,
     countryCode,
-    buddyId: buddy.id,
+    buddyId: buddyId as User["id"],
     ...restOfForm,
   })
   return redirect(`/dashboard/mentees/${mentee.id}`)
@@ -309,11 +310,11 @@ export default function EditMenteePage() {
                   <Select
                     labelId="buddy-select-label"
                     label="Buddy"
-                    {...register("buddyEmail")}
+                    {...register("buddyId")}
                     defaultValue={mentee.buddyId.split("#")[1]}
                   >
                     {buddyList.map(buddy => (
-                      <MenuItem key={buddy.id} value={buddy.email}>
+                      <MenuItem key={buddy.id} value={buddy.id}>
                         {`${buddy.firstName} ${buddy.lastName}`}
                       </MenuItem>
                     ))}

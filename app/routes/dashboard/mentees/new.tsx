@@ -23,11 +23,12 @@ import { Form, useActionData, useTransition } from "@remix-run/react"
 
 import { useForm } from "~/components/hooks/use-form"
 import { validateAction, Zod } from "~/utils/validation"
-import { createMentee, createNote } from "~/models/mentee.server"
+import { createMentee, createNote, isEmailUnique } from "~/models/mentee.server"
 import { requireUser } from "~/session.server"
 import { CountrySelect } from "~/components/country-select"
 import { getCountryCodeFromName } from "~/utils/country"
-import { getBuddyByEmail, Role } from "~/models/user.server"
+import type { User } from "~/models/user.server"
+import { getBuddyById, Role } from "~/models/user.server"
 import { useBuddyList } from "../../resources/buddies"
 
 export const meta: MetaFunction = () => {
@@ -49,7 +50,9 @@ const schema = z
     firstName: Zod.name("First name"),
     lastName: Zod.name("Last name"),
     country: Zod.country(),
-    email: Zod.email(),
+    email: Zod.email().refine(isEmailUnique, {
+      message: "A mentee with this email address already exists.",
+    }),
     homeUniversity: Zod.requiredString("Home university"),
     hostFaculty: Zod.requiredString("Home faculty"),
     agreementStartDate: Zod.dateString("Start date"),
@@ -57,7 +60,9 @@ const schema = z
     notes: z.string().max(2000, "Note cannot be too long").optional(),
     degree: z.enum(["bachelor", "master", "others"]),
     gender: z.enum(["male", "female"]),
-    buddyEmail: Zod.email(),
+    buddyId: z.string().refine(id => getBuddyById(id as User["id"]), {
+      message: "Buddy does not exist",
+    }),
   })
   .and(
     z
@@ -99,19 +104,16 @@ export const action: ActionFunction = async ({ request }) => {
     return json({ errors }, { status: 400 })
   }
 
-  const { country, notes, buddyEmail, ...restOfForm } = formData
+  const { country, notes, buddyId, ...restOfForm } = formData
   const countryCode = getCountryCodeFromName(country)
   if (!countryCode) {
     return json({ errors: { country: "Invalid country" } }, { status: 400 })
   }
 
-  const buddy = await getBuddyByEmail(buddyEmail)
-  invariant(buddy, "Buddy does not exist")
-
   const mentee = await createMentee({
     ...restOfForm,
     countryCode,
-    buddyId: buddy.id,
+    buddyId: buddyId as User["id"],
   })
 
   if (notes) {
@@ -272,10 +274,11 @@ export default function NewMenteePage() {
                   <Select
                     labelId="buddy-select-label"
                     label="Buddy"
-                    {...register("buddyEmail")}
+                    {...register("buddyId")}
                   >
+                    <MenuItem value={"1"}>Random</MenuItem>
                     {buddyList.map(buddy => (
-                      <MenuItem key={buddy.id} value={buddy.email}>
+                      <MenuItem key={buddy.id} value={buddy.id}>
                         {`${buddy.firstName} ${buddy.lastName}`}
                       </MenuItem>
                     ))}

@@ -45,20 +45,20 @@ const seed = {
 module.exports = seed
 //------------------------------------------------------------------------------
 function buildUser(overrides = {}) {
-  const email = overrides.user?.email ?? faker.internet.email()
-  const id = `User#${email}`
   const {
     user: userOvrrides,
     password: passwordOverrides,
     mentees: menteesOvrrides,
     ...restOfOverrides
   } = overrides
+  const firstName = overrides.user?.firstName ?? faker.name.firstName()
+  const lastName = overrides.user?.lastName ?? faker.name.lastName()
+  let email = overrides.user?.email ?? faker.internet.email(firstName, lastName)
+  email = email.toLowerCase()
+  const id = `User#${email}`
   return {
     user: {
       id,
-      email,
-      firstName: faker.name.firstName(),
-      lastName: faker.name.lastName(),
       faculty: faker.company.name(),
       role: faker.helpers.arrayElement(Object.values(ROLE)),
       agreementStartDate: faker.date.recent().toISOString(),
@@ -66,6 +66,9 @@ function buildUser(overrides = {}) {
         .soon(faker.datatype.number({ min: 10, max: 180 }))
         .toISOString(),
       ...userOvrrides,
+      email,
+      firstName,
+      lastName,
     },
     password: {
       userId: id,
@@ -105,7 +108,7 @@ function buildMentee(overrides = {}) {
     firstName,
     lastName,
     gender,
-    email: faker.internet.email(firstName, lastName),
+    email: faker.internet.email(firstName, lastName).toLowerCase(),
     buddyId: cuid(),
     countryCode: faker.address.countryCode(),
     homeUniversity: faker.company.name(),

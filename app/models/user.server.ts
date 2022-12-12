@@ -52,11 +52,6 @@ export async function getUserByEmail(email: UserEmail) {
   return getUserById(userId)
 }
 
-export async function hasUserWithEmail(email: UserEmail) {
-  const user = await getUserByEmail(email)
-  return user !== null
-}
-
 async function getUserPasswordByEmail(
   email: UserEmail,
 ): Promise<Password | null> {
@@ -75,7 +70,8 @@ export async function createUser({
   email,
   ...userProps
 }: UnsavedUser & Password): Promise<User> {
-  const userId = email2UserId(email)
+  const lowerEmail = email.toLowerCase()
+  const userId = email2UserId(lowerEmail)
   const hashedPassword = await bcrypt.hash(password, 10)
   const db = await arc.tables()
   await db.passwords.put({
@@ -84,12 +80,17 @@ export async function createUser({
   })
   await db.users.put({
     id: userId,
-    email,
+    email: lowerEmail,
     ...userProps,
   })
   const user = await getUserById(userId)
   invariant(user, `User not found after being created. This should not happen`)
   return user
+}
+
+export async function isEmailUnique(email: UserEmail): Promise<boolean> {
+  const user = await getUserByEmail(email)
+  return !user
 }
 
 export async function updateUser(updatedUser: Omit<User, "id">): Promise<User> {
@@ -126,32 +127,14 @@ export async function verifyLogin(
   return isValid ? await getUserByEmail(email) : null
 }
 
-export async function getBuddyByEmail(
-  email: User["email"],
-): Promise<User | null> {
-  const buddy = await getUserByEmail(email)
+export async function getBuddyById(id: UserId): Promise<User | null> {
+  const buddy = await getUserById(id)
   if (!buddy) {
     return null
   }
   const isBuddyActive = new Date(buddy.agreementEndDate) > new Date()
   return isBuddyActive ? buddy : null
 }
-
-// export async function canUserDeleteUser({
-//   loggedInUser,
-//   userToDelete,
-// }: {
-//   loggedInUser: User
-//   userToDelete: User
-// }): Promise<boolean> {
-//   const isHigher = loggedInUser.role > userToDelete.role
-//   const isNotAdmin = userToDelete.role !== Role.ADMIN
-//   const isNotLoggedInUser = loggedInUser.id !== userToDelete.id
-//   const hasNoMentees =
-//     (await getMenteeCount({ buddyId: userToDelete.id })) === 0
-
-//   return isHigher && isNotAdmin && isNotLoggedInUser && hasNoMentees
-// }
 
 export async function canUserDeleteUser({
   loggedInUser,

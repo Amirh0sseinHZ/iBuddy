@@ -37,6 +37,10 @@ mentees
   buddyId *string
   name menteesByBuddyId
 
+mentees
+  email *string
+  name menteeByEmail
+
 assets
   ownerId *string
   name assetsByOwnerId
