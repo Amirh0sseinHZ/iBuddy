@@ -143,6 +143,9 @@ export async function deleteAsset(id: Asset["id"]): Promise<void> {
     return
   }
   await db.assets.delete({ id })
+  if (asset.type === "email-template") {
+    return
+  }
   if (asset.host === "s3") {
     await destroyS3File(asset.src)
   } else if (asset.host === "local") {
