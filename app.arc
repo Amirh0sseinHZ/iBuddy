@@ -44,3 +44,7 @@ mentees
 assets
   ownerId *string
   name assetsByOwnerId
+
+assets
+  searchableName *string
+  name assetBySearchableName

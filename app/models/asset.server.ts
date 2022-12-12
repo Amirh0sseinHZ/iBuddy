@@ -11,6 +11,7 @@ export type Asset = {
   id: ReturnType<typeof cuid>
   ownerId: User["id"]
   name: string
+  searchableName: string
   description?: string
   type: "image" | "document" | "email-template"
   host: "s3" | "local"
@@ -75,14 +76,26 @@ export async function getAssetById(id: Asset["id"]): Promise<Asset | null> {
   return record
 }
 
+export async function isNameUnique(name: Asset["name"]): Promise<boolean> {
+  const db = await arc.tables()
+  const result = await db.assets.query({
+    IndexName: "assetBySearchableName",
+    KeyConditionExpression: "searchableName = :name",
+    ExpressionAttributeValues: { ":name": name.toLowerCase() },
+  })
+  return result.Count === 0
+}
+
 export async function createAsset(
-  newAsset: Omit<Asset, "id" | "createdAt" | "updatedAt">,
+  newAsset: Omit<Asset, "id" | "searchableName" | "createdAt" | "updatedAt">,
 ): Promise<Asset> {
   const id = cuid()
   const db = await arc.tables()
   await db.assets.put({
     ...newAsset,
     id,
+    name: newAsset.name.trim(),
+    searchableName: newAsset.name.trim().toLowerCase(),
     createdAt: new Date().toISOString(),
   })
   const asset = await getAssetById(id)
@@ -98,11 +111,11 @@ export async function updateAsset({
   src,
 }: Pick<
   Asset,
-  "id" | "name" | "description" | "src" | "sharedUsers"
+  "id" | "name" | "searchableName" | "description" | "src" | "sharedUsers"
 >): Promise<Asset> {
   const asset = await getAssetById(id)
   invariant(asset, "Asset not found")
-  const updatedExpression = `set #name = :name, description = :description, sharedUsers = :sharedUsers, updatedAt = :updatedAt${
+  const updatedExpression = `set #name = :name, searchableName = :searchableName, description = :description, sharedUsers = :sharedUsers, updatedAt = :updatedAt${
     asset.type === "email-template" ? ", src = :src" : ""
   }`
   const db = await arc.tables()
@@ -111,7 +124,8 @@ export async function updateAsset({
     UpdateExpression: updatedExpression,
     ExpressionAttributeNames: { "#name": "name" },
     ExpressionAttributeValues: {
-      ":name": name,
+      ":name": name.trim(),
+      ":searchableName": name.toLowerCase().trim(),
       ":description": description,
       ":sharedUsers": sharedUsers,
       ":updatedAt": new Date().toISOString(),

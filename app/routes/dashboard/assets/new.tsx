@@ -36,6 +36,7 @@ import {
 import { validateAction, Zod } from "~/utils/validation"
 import { useForm } from "~/components/hooks/use-form"
 import type { Asset } from "~/models/asset.server"
+import { isNameUnique } from "~/models/asset.server"
 import { createAsset } from "~/models/asset.server"
 import { requireUserId } from "~/session.server"
 import { useUserList } from "~/routes/resources/users"
@@ -76,7 +77,9 @@ function allowOnlyPermittedFiles({
 
 const schema = z
   .object({
-    name: Zod.requiredString("Name"),
+    name: Zod.requiredString("Name").refine(isNameUnique, {
+      message: "Name is already taken",
+    }),
     description: z
       .string()
       .max(2000, "Description cannot be too long")
@@ -93,6 +96,13 @@ const schema = z
     template: true,
   })
   .refine(data => data.file || data.template, "file or template required.")
+  .refine(data => {
+    if (data.type === "email-template" && data.template) {
+      const isEmptyHtml = data.template.replace(/<[^>]+>/g, "").trim() === ""
+      return !isEmptyHtml
+    }
+    return true
+  }, "Template is required.")
 
 type ActionInput = z.TypeOf<typeof schema>
 
