@@ -278,7 +278,6 @@ export default function NewMenteePage() {
                     label="Buddy"
                     {...register("buddyId")}
                   >
-                    <MenuItem value={"1"}>Random</MenuItem>
                     {buddyList.map(buddy => (
                       <MenuItem key={buddy.id} value={buddy.id}>
                         {`${buddy.firstName} ${buddy.lastName}`}
