@@ -2,7 +2,6 @@ import * as z from "zod"
 import type { ActionFunction, LoaderArgs, MetaFunction } from "@remix-run/node"
 import { redirect } from "@remix-run/node"
 import { json } from "@remix-run/node"
-import crypto from "crypto"
 
 import {
   Button,
@@ -26,7 +25,8 @@ import { validateAction, Zod } from "~/utils/validation"
 import { requireUser } from "~/session.server"
 import { createUser, isEmailUnique, Role } from "~/models/user.server"
 import { PagePaper } from "~/components/layout"
-import { sendEmail, sendWelcomeEmail } from "~/utils/email-service"
+import { sendWelcomeEmail } from "~/utils/email-service"
+import { generateRandomPassword } from "~/utils/common"
 
 export const meta: MetaFunction = () => {
   return {
@@ -244,18 +244,4 @@ export default function NewUserPage() {
       </Grid>
     </Grid>
   )
-}
-
-function generateRandomPassword(length: number = 20): string {
-  const charset = Object.values({
-    NUMBERS: "0123456789",
-    LOWERCASE: "abcdefghijklmnopqrstuvwxyz",
-    UPPERCASE: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-    SYMBOLS: "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
-  }).join("")
-  let password = ""
-  while (length--) {
-    password += charset[crypto.randomInt(charset.length)]
-  }
-  return password
 }
