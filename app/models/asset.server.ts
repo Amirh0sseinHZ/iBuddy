@@ -136,6 +136,17 @@ export async function updateAsset({
   return result.Attributes as Asset
 }
 
+export async function getUserAssetCount(ownerId: User["id"]): Promise<number> {
+  const db = await arc.tables()
+  const result = await db.assets.query({
+    IndexName: "assetsByOwnerId",
+    KeyConditionExpression: "ownerId = :ownerId",
+    ExpressionAttributeValues: { ":ownerId": ownerId },
+    Select: "COUNT",
+  })
+  return result.Count ?? 0
+}
+
 export async function deleteAsset(id: Asset["id"]): Promise<void> {
   const db = await arc.tables()
   const asset = await getAssetById(id)

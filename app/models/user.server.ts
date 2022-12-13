@@ -1,6 +1,7 @@
 import arc from "@architect/functions"
 import bcrypt from "bcryptjs"
 import invariant from "tiny-invariant"
+import { getUserAssetCount } from "./asset.server"
 import { getMenteeCount } from "./mentee.server"
 
 export enum Role {
@@ -170,12 +171,18 @@ export async function canUserDeleteUser({
       reason: "You can only delete users with a lower role than you",
     }
   }
-  const hasNoMentees =
-    (await getMenteeCount({ buddyId: userToDelete.id })) === 0
-  if (!hasNoMentees) {
+  const hasMentees = (await getMenteeCount({ buddyId: userToDelete.id })) > 0
+  if (hasMentees) {
     return {
       canDelete: false,
       reason: "You can not delete a user with active mentees",
+    }
+  }
+  const hasAssets = (await getUserAssetCount(userToDelete.id)) > 0
+  if (hasAssets) {
+    return {
+      canDelete: false,
+      reason: "You can not delete a user who has assets",
     }
   }
   return {

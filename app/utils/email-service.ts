@@ -1,6 +1,7 @@
 import type { Mentee } from "./../models/mentee.server"
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses"
 import invariant from "tiny-invariant"
+import type { User } from "~/models/user.server"
 
 const { AWS_REGION, SES_EMAIL_SOURCE } = process.env
 invariant(AWS_REGION, "AWS_REGION is required")
@@ -53,6 +54,10 @@ export async function sendEmail({
       "base64",
     )}?= <${SES_EMAIL_SOURCE}>`,
   })
+  // if (process.env.NODE_ENV === "development") {
+  //   console.log("sendEmailCommand", sendEmailCommand)
+  //   return
+  // }
   return await client.send(sendEmailCommand)
 }
 
@@ -84,5 +89,72 @@ export function areAllowedVariables(
   return some.every(key => {
     const keyWithoutMustaches = key.slice(2, -2)
     return ALLOWED_VARIABLES.includes(keyWithoutMustaches as any)
+  })
+}
+
+export function sendWelcomeEmail({
+  user,
+  password,
+}: {
+  user: User
+  password: string
+}) {
+  const subject = "Welcome to iBuddy - Here's your login details"
+  const htmlBody = `<html>
+  <head>
+    <style>
+      body {
+        font-family: sans-serif;
+        font-size: 14px;
+      }
+      p {
+        margin-bottom: 10px;
+      }
+      ul {
+        margin-top: 0;
+        margin-bottom: 10px;
+      }
+      li {
+        list-style-type: none;
+      }
+      .bold {
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      Dear ${user.firstName},
+    </p>
+    <p>
+      Welcome to iBuddy! We are excited to have you as a member of our community.
+    </p>
+    <p>
+      Your login credentials are as follows:
+    </p>
+    <ul>
+      <li>Username: <span class="bold">${user.email}</span></li>
+      <li>Password: <span class="bold">${password}</span></li>
+    </ul>
+    <p>
+      Please keep these credentials safe and do not share them with anyone.
+    </p>
+    <p>
+      Thank you for joining us. We look forward to your contributions to our community.
+    </p>
+    <p>
+      Sincerely,<br>
+      <span class="bold">iBuddy</span>
+    </p>
+  </body>
+  </html>
+  `
+
+  return sendEmail({
+    to: user.email,
+    subject,
+    htmlBody,
+    senderName: "iBuddy",
+    replyTo: "no-reply@ibbudy.com",
   })
 }
