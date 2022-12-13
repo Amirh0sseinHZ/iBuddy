@@ -5,8 +5,6 @@ import { json } from "@remix-run/node"
 import invariant from "tiny-invariant"
 
 import {
-  Box,
-  Paper,
   Button,
   TextField,
   FormControlLabel,
@@ -18,6 +16,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Typography,
 } from "@mui/material"
 import { Form, useActionData, useTransition } from "@remix-run/react"
 
@@ -30,6 +29,7 @@ import { getCountryCodeFromName } from "~/utils/country"
 import type { User } from "~/models/user.server"
 import { getBuddyById, Role } from "~/models/user.server"
 import { useBuddyList } from "../../resources/buddies"
+import { PagePaper } from "~/components/layout"
 
 export const meta: MetaFunction = () => {
   return {
@@ -132,19 +132,21 @@ export default function NewMenteePage() {
   const { register } = useForm(actionData?.errors)
   const transition = useTransition()
   const isBusy = transition.state !== "idle" && Boolean(transition.submission)
-
+  const genderError = actionData?.errors?.gender
+  const degreeError = actionData?.errors?.degree
   return (
-    <Box sx={{ width: "100%", mt: 6 }}>
-      <Paper sx={{ width: "100%", mb: 2 }}>
-        <Box
-          sx={{
-            paddingX: 4,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            pt: 3,
-          }}
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{ color: "#505050", fontWeight: 600 }}
         >
+          New mentee
+        </Typography>
+      </Grid>
+      <Grid item xs={12}>
+        <PagePaper>
           <Form method="post" noValidate>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
@@ -194,14 +196,14 @@ export default function NewMenteePage() {
                 />
               </Grid>
               <Grid item xs={12}>
-                <FormControl required>
+                <FormControl required error={Boolean(genderError)}>
                   <FormLabel id="gender-row-radio-buttons-group-label">
                     Gender
                   </FormLabel>
                   <RadioGroup
                     row
                     aria-labelledby="gender-row-radio-buttons-group-label"
-                    {...register("gender")}
+                    name="gender"
                   >
                     <FormControlLabel
                       value="male"
@@ -217,14 +219,14 @@ export default function NewMenteePage() {
                 </FormControl>
               </Grid>
               <Grid item xs={12}>
-                <FormControl required>
+                <FormControl required error={Boolean(degreeError)}>
                   <FormLabel id="degree-row-radio-buttons-group-label">
                     Degree
                   </FormLabel>
                   <RadioGroup
                     row
                     aria-labelledby="degree-row-radio-buttons-group-label"
-                    {...register("degree")}
+                    name="degree"
                   >
                     <FormControlLabel
                       value="bachelor"
@@ -299,14 +301,14 @@ export default function NewMenteePage() {
               fullWidth
               type="submit"
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ mt: 3 }}
               disabled={isBusy}
             >
               Register {isBusy && "..."}
             </Button>
           </Form>
-        </Box>
-      </Paper>
-    </Box>
+        </PagePaper>
+      </Grid>
+    </Grid>
   )
 }

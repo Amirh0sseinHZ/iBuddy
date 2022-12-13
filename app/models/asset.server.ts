@@ -111,7 +111,7 @@ export async function updateAsset({
   src,
 }: Pick<
   Asset,
-  "id" | "name" | "searchableName" | "description" | "src" | "sharedUsers"
+  "id" | "name" | "description" | "src" | "sharedUsers"
 >): Promise<Asset> {
   const asset = await getAssetById(id)
   invariant(asset, "Asset not found")

@@ -1,5 +1,4 @@
 import * as React from "react"
-import { Response } from "@remix-run/node"
 import {
   useLoaderData,
   Form,
@@ -12,10 +11,30 @@ import type {
   MetaFunction,
   SerializeFrom,
 } from "@remix-run/server-runtime"
-import { redirect } from "@remix-run/server-runtime"
-import { json } from "@remix-run/server-runtime"
+import { redirect, json } from "@remix-run/server-runtime"
 import invariant from "tiny-invariant"
-import Button from "@mui/material/Button"
+
+import {
+  Box,
+  Grid,
+  IconButton,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+  Button,
+} from "@mui/material"
+import Icon from "@mdi/react"
+import {
+  mdiCheck,
+  mdiClose,
+  mdiPencilOutline,
+  mdiTrashCanOutline,
+} from "@mdi/js"
+
 import type { Note } from "~/models/mentee.server"
 import { getMenteeById } from "~/models/mentee.server"
 import { getNote } from "~/models/mentee.server"
@@ -30,10 +49,15 @@ import {
 } from "~/models/mentee.server"
 import { getUserById } from "~/models/user.server"
 import { requireUser } from "~/session.server"
-import { Box, Divider, Grid, Link, Paper, Typography } from "@mui/material"
-import { PendingLink } from "~/components/link"
-import { getHumanReadableMenteeStatus } from "~/utils/common"
+import { PendingMuiLink } from "~/components/link"
+import {
+  getHumanReadableDegree,
+  getHumanReadableMenteeStatus,
+} from "~/utils/common"
 import { GenderIcon } from "~/components/icons"
+import { PagePaper } from "~/components/layout"
+import { BackgroundLetterAvatars } from "~/components/avatar"
+import { getCountryFromCode } from "~/utils/country"
 
 export const meta: MetaFunction = ({ data }) => {
   const { mentee } = data as SerializeFrom<typeof loader>
@@ -61,11 +85,15 @@ export async function loader({ params, request }: LoaderArgs) {
   const notesWithAuthorsAndPermissions = notes.map(note => {
     const { authorId, ...restOfNote } = note
     const author = authors.find(author => author?.id === authorId)
+    invariant(author, "Author not found")
     const canBeMutated = canUserMutateNote(user, note)
     return { ...restOfNote, author, canBeMutated }
   })
+  const sortedNotes = notesWithAuthorsAndPermissions.sort((a, b) =>
+    a.createdAt > b.createdAt ? -1 : 1,
+  )
   return json({
-    notes: notesWithAuthorsAndPermissions,
+    notes: sortedNotes,
     canMutateMentee: canUserMutateMentee(user),
     mentee: {
       ...mentee,
@@ -88,6 +116,7 @@ export async function action({ request, params }: ActionArgs) {
     invariant(menteeId, "menteeId is required")
     invariant(content, "content is required")
     await createNote({ menteeId, content, authorId: user.id })
+    return null
   }
   if (_action === "update_note") {
     invariant(
@@ -108,6 +137,7 @@ export async function action({ request, params }: ActionArgs) {
       content,
       menteeId,
     })
+    return null
   }
   if (_action === "delete_note") {
     invariant(
@@ -121,6 +151,7 @@ export async function action({ request, params }: ActionArgs) {
     invariant(note, "Note not found")
     invariant(canUserMutateNote(user, note), "Not allowed to delete note")
     await deleteNote({ menteeId, noteId })
+    return null
   }
   if (_action === "delete_mentee") {
     invariant(menteeId, "menteeId is required")
@@ -128,7 +159,7 @@ export async function action({ request, params }: ActionArgs) {
     await deleteMentee(menteeId)
     return redirect("/dashboard/mentees")
   }
-  return new Response()
+  throw new Error(`Unknown action: ${_action}`)
 }
 
 export default function MenteePage() {
@@ -169,218 +200,238 @@ export default function MenteePage() {
     transition.submission?.formData.get("_action") === "delete_mentee"
 
   return (
-    <Box sx={{ width: "100%", mt: 6 }}>
-      <Paper sx={{ width: "100%", mb: 2 }}>
-        <Grid container sx={{ paddingY: 4, paddingX: 2 }}>
-          <Grid item xs={12}>
-            <Box sx={{ paddingX: 2 }}>
-              <Typography variant="h4" sx={{ mb: 1 }}>
-                {mentee.firstName} {mentee.lastName}
-              </Typography>
-              {canMutateMentee ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    gap: 1,
-                  }}
+    <Grid container spacing={2}>
+      <Grid
+        item
+        xs={12}
+        container
+        justifyContent="space-between"
+        alignItems="center"
+      >
+        <Grid item xs={9}>
+          <Typography
+            component="h1"
+            variant="h4"
+            sx={{ color: "#505050", fontWeight: 600 }}
+          >
+            {mentee.firstName} {mentee.lastName}
+          </Typography>
+        </Grid>
+        {canMutateMentee ? (
+          <Grid item xs={3} container justifyContent="flex-end">
+            <Stack direction="row" spacing={1}>
+              <Button
+                size="small"
+                variant="contained"
+                component={RemixLink}
+                to={`/dashboard/mentees/${mentee.id}/edit`}
+              >
+                Edit
+              </Button>
+              <Form method="delete">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  type="submit"
+                  color="error"
+                  value="delete_mentee"
+                  disabled={isDeletingMentee}
+                  name="_action"
                 >
-                  <Button
-                    size="small"
-                    variant="contained"
-                    component={RemixLink}
-                    to={`/dashboard/mentees/${mentee.id}/edit`}
-                  >
-                    Edit
-                  </Button>
-                  <Form method="delete">
-                    <Button
-                      variant="outlined"
-                      type="submit"
-                      color="error"
-                      value="delete_mentee"
-                      disabled={isDeletingMentee}
-                      name="_action"
-                    >
-                      Delete
-                    </Button>
-                  </Form>
-                </Box>
-              ) : null}
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="body1" sx={{ mt: 1 }}>
-                <Box fontWeight="fontWeightMedium" display="inline">
-                  Gender
-                </Box>
-                {": "}
-                <GenderIcon gender={mentee.gender} />
-              </Typography>
-              <Typography variant="body1" sx={{ mt: 1 }}>
-                <Box fontWeight="fontWeightMedium" display="inline">
-                  Email
-                </Box>
-                {": "}
-                <Link
-                  component={RemixLink}
+                  Delete
+                </Button>
+              </Form>
+            </Stack>
+          </Grid>
+        ) : null}
+      </Grid>
+      <Grid item xs={12} container spacing={2}>
+        <Grid item xs={12} lg={6}>
+          <PagePaper>
+            <BackgroundLetterAvatars
+              name={`${mentee.firstName} ${mentee.lastName}`}
+              sx={{
+                width: 120,
+                height: 120,
+                fontSize: 48,
+                float: "right",
+              }}
+            />
+            {Object.entries({
+              Gender: <GenderIcon gender={mentee.gender} />,
+              Email: (
+                <PendingMuiLink
                   to={`/dashboard/mentees/email/?to=${mentee.email}`}
                 >
                   {mentee.email}
-                </Link>
-              </Typography>
-              <Typography variant="body1" sx={{ mt: 1 }}>
+                </PendingMuiLink>
+              ),
+              Degree: getHumanReadableDegree(mentee.degree),
+              "Home University": mentee.homeUniversity,
+              "Host Faculty": mentee.hostFaculty,
+              Country:
+                getCountryFromCode(mentee.countryCode)?.label ?? "Unknown",
+              Buddy: (
+                <PendingMuiLink to={`/dashboard/users/${mentee.buddy.email}`}>
+                  {`${mentee.buddy.firstName} ${mentee.buddy.lastName}`}
+                </PendingMuiLink>
+              ),
+              "Agreement Start Date": new Date(
+                mentee.agreementStartDate,
+              ).toLocaleDateString(),
+              "Agreement End Date": new Date(
+                mentee.agreementEndDate,
+              ).toLocaleDateString(),
+              Status: getHumanReadableMenteeStatus(mentee.status),
+            }).map(([key, value]) => (
+              <Typography
+                key={key}
+                variant="body1"
+                sx={{ mt: 1, display: "flex" }}
+              >
                 <Box fontWeight="fontWeightMedium" display="inline">
-                  Degree
+                  {key}
                 </Box>
-                {": "}
-                {mentee.degree}
+                {": \u00A0"}
+                {value}
               </Typography>
-              <Typography variant="body1" sx={{ mt: 1 }}>
-                <Box fontWeight="fontWeightMedium" display="inline">
-                  Home University
-                </Box>
-                {": "}
-                {mentee.homeUniversity}
-              </Typography>
-              <Typography variant="body1" sx={{ mt: 1 }}>
-                <Box fontWeight="fontWeightMedium" display="inline">
-                  Host Faculty
-                </Box>
-                {": "}
-                {mentee.hostFaculty}
-              </Typography>
-              <Typography variant="body1" sx={{ mt: 1 }}>
-                <Box fontWeight="fontWeightMedium" display="inline">
-                  Buddy
-                </Box>
-                {": "}
-                <Box sx={{ display: "inline", color: "primary.main" }}>
-                  <PendingLink to={`/dashboard/users/${mentee.buddy.email}`}>
-                    {mentee.buddy.firstName} {mentee.buddy.lastName}
-                  </PendingLink>
-                </Box>
-              </Typography>
-              <Typography variant="body1" sx={{ mt: 1 }}>
-                <Box fontWeight="fontWeightMedium" display="inline">
-                  Country
-                </Box>
-                {": "}
-                {mentee.countryCode}
-              </Typography>
-              <Typography variant="body1" sx={{ mt: 1 }}>
-                <Box fontWeight="fontWeightMedium" display="inline">
-                  Agreement start date
-                </Box>
-                {": "}
-                {new Date(mentee.agreementStartDate).toLocaleDateString()}
-              </Typography>
-              <Typography variant="body1" sx={{ mt: 1 }}>
-                <Box fontWeight="fontWeightMedium" display="inline">
-                  Agreement end date
-                </Box>
-                {": "}
-                {new Date(mentee.agreementEndDate).toLocaleDateString()}
-              </Typography>
-              <Typography variant="body1" sx={{ mt: 1 }}>
-                <Box fontWeight="fontWeightMedium" display="inline">
-                  Status
-                </Box>
-                {": "}
-                {getHumanReadableMenteeStatus(mentee.status)}
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12}>
-            <Box sx={{ paddingX: 4 }}>
-              <h1>Notes</h1>
-              <ul>
-                {notes.map(note => {
-                  const isEditing = note.id === editingId
-                  return (
-                    <li key={note.id}>
-                      {isEditing ? (
-                        <Form method="post">
-                          <input type="hidden" name="id" value={note.id} />
-                          <textarea name="content">{note.content}</textarea>
-                          <button
-                            name="_action"
-                            value="update_note"
-                            type="submit"
-                            aria-label="update"
-                            disabled={isUpdatingNote}
-                          >
-                            Save
-                          </button>
-                          <button
-                            disabled={isUpdatingNote}
-                            onClick={() => setEditingId(null)}
-                          >
-                            Cancel
-                          </button>
-                        </Form>
-                      ) : (
-                        <p>
-                          <b>
-                            {note.author?.firstName} {note.author?.lastName}
-                          </b>
-                          : {note.content}
-                          <small> created at {note.createdAt}</small>
-                          {note.updatedAt ? (
-                            <small> updated at {note.updatedAt}</small>
-                          ) : null}
-                          {note.canBeMutated ? (
-                            <>
-                              <button onClick={() => setEditingId(note.id)}>
-                                ✎
-                              </button>
-                              <Form method="post" style={{ display: "inline" }}>
-                                <input
-                                  type="hidden"
-                                  name="id"
-                                  value={note.id}
-                                />
-                                <button
-                                  name="_action"
-                                  value="delete_note"
-                                  type="submit"
-                                  aria-label="delete"
-                                  disabled={
-                                    isDeletingNote &&
-                                    transition.submission?.formData.get(
-                                      "id",
-                                    ) === note.id
-                                  }
-                                >
-                                  x
-                                </button>
-                              </Form>
-                            </>
-                          ) : null}
-                        </p>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            </Box>
-          </Grid>
-          <Grid item xs={12}>
-            <Form method="post" ref={formRef}>
-              <textarea
-                ref={textareaRef}
+            ))}
+            <Box sx={{ clear: "both" }} />
+          </PagePaper>
+        </Grid>
+        <Grid item xs={12} lg={6}>
+          <Stack spacing={1}>
+            <Form method="post" ref={formRef} style={{ textAlign: "right" }}>
+              <TextField
                 name="content"
+                label="Add a note"
+                minRows={3}
                 disabled={isAddingNote}
+                inputRef={textareaRef}
+                sx={{ backgroundColor: "white" }}
+                multiline
+                fullWidth
               />
-              <button
+              <Button
+                type="submit"
                 name="_action"
                 value="create_note"
-                type="submit"
                 disabled={isAddingNote}
+                sx={{ my: 1 }}
               >
                 Add Note
-              </button>
+              </Button>
             </Form>
-          </Grid>
+            {notes.map(note => {
+              const authorFullName = `${note.author.firstName} ${note.author.lastName}`
+              const isBeingEdited = note.id === editingId
+              const isCurrentNoteBeingUpdated =
+                isUpdatingNote &&
+                transition.submission?.formData.get("id") === note.id
+              const isCurrentNoteBeingDeleted =
+                isDeletingNote &&
+                transition.submission?.formData.get("id") === note.id
+              return (
+                <Paper key={note.id}>
+                  <ListItem alignItems="flex-start">
+                    <ListItemAvatar>
+                      <BackgroundLetterAvatars name={authorFullName} />
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={
+                        <>
+                          {authorFullName} -{" "}
+                          <Typography variant="caption">
+                            Wrote on{" "}
+                            {new Date(note.createdAt).toLocaleDateString()}
+                            {note.updatedAt
+                              ? ` and updated on ${new Date(
+                                  note.updatedAt,
+                                ).toLocaleDateString()}`
+                              : ""}
+                          </Typography>
+                        </>
+                      }
+                      secondary={
+                        isBeingEdited ? (
+                          <>
+                            <TextField
+                              name="content"
+                              minRows={3}
+                              defaultValue={note.content}
+                              inputProps={{
+                                form: "editForm",
+                              }}
+                              multiline
+                              fullWidth
+                            />
+                          </>
+                        ) : (
+                          note.content
+                        )
+                      }
+                    />
+                  </ListItem>
+                  {note.canBeMutated ? (
+                    <Box sx={{ mb: 1, mr: 2.5 }}>
+                      <Stack direction="row-reverse" spacing={1}>
+                        {isBeingEdited ? (
+                          <>
+                            <Form id="editForm" method="post">
+                              <input type="hidden" name="id" value={note.id} />
+                              <IconButton
+                                edge="end"
+                                aria-label="update note"
+                                name="_action"
+                                value="update_note"
+                                type="submit"
+                                disabled={isCurrentNoteBeingUpdated}
+                              >
+                                <Icon path={mdiCheck} size={1} />
+                              </IconButton>
+                            </Form>
+                            <IconButton
+                              edge="end"
+                              aria-label="cancel editing note"
+                              disabled={isCurrentNoteBeingUpdated}
+                              onClick={() => setEditingId(null)}
+                            >
+                              <Icon path={mdiClose} size={1} />
+                            </IconButton>
+                          </>
+                        ) : (
+                          <>
+                            <IconButton
+                              edge="end"
+                              aria-label="edit"
+                              onClick={() => setEditingId(note.id)}
+                            >
+                              <Icon path={mdiPencilOutline} size={1} />
+                            </IconButton>
+                            <Form method="post" style={{ display: "inline" }}>
+                              <input type="hidden" name="id" value={note.id} />
+                              <IconButton
+                                edge="end"
+                                aria-label="delete"
+                                type="submit"
+                                name="_action"
+                                value="delete_note"
+                                disabled={isCurrentNoteBeingDeleted}
+                              >
+                                <Icon path={mdiTrashCanOutline} size={1} />
+                              </IconButton>
+                            </Form>
+                          </>
+                        )}
+                      </Stack>
+                    </Box>
+                  ) : null}
+                </Paper>
+              )
+            })}
+          </Stack>
         </Grid>
-      </Paper>
-    </Box>
+      </Grid>
+    </Grid>
   )
 }

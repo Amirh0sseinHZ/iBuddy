@@ -20,7 +20,6 @@ import { withEmotionCache } from "@emotion/react"
 import { getUser } from "./session.server"
 
 import ClientStyleContext from "./styles/ClientStyleContext"
-import Layout from "./components/layout"
 import theme from "./styles/theme"
 import globalStyles from "~/styles/global.css"
 
@@ -107,9 +106,7 @@ const Document = withEmotionCache(
 export default function App() {
   return (
     <Document>
-      <Layout>
-        <Outlet />
-      </Layout>
+      <Outlet />
     </Document>
   )
 }
@@ -120,17 +117,15 @@ export function ErrorBoundary({ error }: { error: Error }) {
 
   return (
     <Document title="Error!">
-      <Layout>
-        <div>
-          <h1>There was an error</h1>
-          <p>{error.message}</p>
-          <hr />
-          <p>
-            Hey, developer, you should replace this with what you want your
-            users to see.
-          </p>
-        </div>
-      </Layout>
+      <div>
+        <h1>There was an error</h1>
+        <p>{error.message}</p>
+        <hr />
+        <p>
+          Hey, developer, you should replace this with what you want your users
+          to see.
+        </p>
+      </div>
     </Document>
   )
 }
@@ -161,12 +156,10 @@ export function CatchBoundary() {
 
   return (
     <Document title={`${caught.status} ${caught.statusText}`}>
-      <Layout>
-        <h1>
-          {caught.status}: {caught.statusText}
-        </h1>
-        {message}
-      </Layout>
+      <h1>
+        {caught.status}: {caught.statusText}
+      </h1>
+      {message}
     </Document>
   )
 }

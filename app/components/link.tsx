@@ -1,10 +1,12 @@
 import {
-  Link,
+  Link as RemixLink,
   NavLink,
   useLocation,
   useResolvedPath,
   useTransition,
 } from "@remix-run/react"
+import type { LinkProps } from "@mui/material/Link"
+import MuiLink from "@mui/material/Link"
 
 export function PendingLink({
   to,
@@ -16,7 +18,7 @@ export function PendingLink({
   const isPending = useIsPendingLink(to)
 
   return (
-    <Link
+    <RemixLink
       data-pending={isPending ? "true" : null}
       to={to}
       children={children}
@@ -24,6 +26,33 @@ export function PendingLink({
         opacity: isPending ? 0.6 : 1,
         transition: "opacity 0.2s ease-in-out",
       }}
+    />
+  )
+}
+
+export function PendingMuiLink({
+  to,
+  sx,
+  ...restOfProps
+}: {
+  to: string
+} & LinkProps) {
+  const isPending = useIsPendingLink(to)
+
+  return (
+    <MuiLink
+      data-pending={isPending ? "true" : null}
+      component={RemixLink}
+      to={to}
+      style={{
+        opacity: isPending ? 0.6 : 1,
+        transition: "opacity 0.2s ease-in-out",
+      }}
+      sx={{
+        textDecoration: "none",
+        ...sx,
+      }}
+      {...restOfProps}
     />
   )
 }

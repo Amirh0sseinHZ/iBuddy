@@ -21,10 +21,11 @@ import {
   Grid,
   Link,
   List,
-  ListItem,
   ListItemAvatar,
+  ListItemButton,
   ListItemText,
   Paper,
+  Stack,
   Tooltip,
   Typography,
 } from "@mui/material"
@@ -41,6 +42,7 @@ import { requireUser } from "~/session.server"
 import { getHumanReadableMenteeStatus } from "~/utils/common"
 import { PendingLink } from "~/components/link"
 import { pick } from "~/utils/object"
+import { PagePaper } from "~/components/layout"
 
 export const meta: MetaFunction = ({ data }) => {
   const { user } = data as SerializeFrom<typeof loader>
@@ -115,104 +117,111 @@ export default function UserPage() {
   const userFullName = `${user.firstName} ${user.lastName}`
 
   return (
-    <Box sx={{ width: "100%", mt: 6 }}>
-      <Paper sx={{ width: "100%", mb: 2 }}>
-        <Grid container>
-          <Grid container sx={{ paddingY: 4, paddingX: 2 }}>
-            <Grid item xs={5} lg={3}>
-              <Box sx={{ paddingX: 2 }}>
-                <BackgroundLetterAvatars
-                  name={userFullName}
+    <Grid container spacing={2}>
+      <Grid
+        item
+        xs={12}
+        container
+        justifyContent="space-between"
+        alignItems="center"
+      >
+        <Grid item xs={9}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Typography
+              component="h1"
+              variant="h4"
+              sx={{ color: "#505050", fontWeight: 600 }}
+            >
+              {userFullName}
+            </Typography>
+            <UserRoleChip role={user.role} />
+          </Stack>
+        </Grid>
+        <Grid item xs={3} container justifyContent="flex-end">
+          <Stack direction="row" spacing={1}>
+            <Button
+              size="small"
+              variant="contained"
+              component={RemixLink}
+              to={`/dashboard/users/${user.email}/edit`}
+            >
+              Edit
+            </Button>
+            <Tooltip title={cannotDeleteReason}>
+              <Form method="post">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  disabled={!canBeDeleted || isDeleting}
+                  type="submit"
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </Button>
+              </Form>
+            </Tooltip>
+          </Stack>
+        </Grid>
+      </Grid>
+      <Grid item xs={12} container spacing={2}>
+        <Grid item xs={12} lg={6}>
+          <PagePaper>
+            <BackgroundLetterAvatars
+              name={userFullName}
+              sx={{
+                width: 120,
+                height: 120,
+                fontSize: 48,
+                float: "right",
+              }}
+            />
+            {Object.entries({
+              Email: (
+                <Link
+                  target="_blank"
+                  href={`mailto:${user.email}`}
                   sx={{
-                    width: "100%",
-                    aspectRatio: "1/1",
-                    height: "auto",
-                    borderRadius: 5,
-                  }}
-                  variant="square"
-                />
-              </Box>
-            </Grid>
-            <Grid item xs={7} lg={9}>
-              <Box sx={{ paddingX: 2 }}>
-                <Typography variant="h4" sx={{ mb: 1 }}>
-                  {userFullName} <UserRoleChip role={user.role} />
-                </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    gap: 1,
+                    textDecoration: "none",
                   }}
                 >
-                  <Button
-                    size="small"
-                    variant="contained"
-                    component={RemixLink}
-                    to={`/dashboard/users/${user.email}/edit`}
-                  >
-                    Edit
-                  </Button>
-                  <Tooltip title={cannotDeleteReason}>
-                    <Form method="post">
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        disabled={!canBeDeleted || isDeleting}
-                        type="submit"
-                      >
-                        {isDeleting ? "Deleting..." : "Delete"}
-                      </Button>
-                    </Form>
-                  </Tooltip>
+                  {user.email}
+                </Link>
+              ),
+              Faculty: user.faculty,
+              "Agreement Start Date": new Date(
+                user.agreementStartDate,
+              ).toLocaleDateString(),
+              "Agreement End Date": new Date(
+                user.agreementEndDate,
+              ).toLocaleDateString(),
+            }).map(([key, value]) => (
+              <Typography
+                key={key}
+                variant="body1"
+                sx={{ mt: 1, display: "flex" }}
+              >
+                <Box fontWeight="fontWeightMedium" display="inline">
+                  {key}
                 </Box>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="body1" sx={{ mt: 1 }}>
-                  <Box fontWeight="fontWeightMedium" display="inline">
-                    Email
-                  </Box>
-                  {": "}
-                  <Link target="_blank" href={`mailto:${user.email}`}>
-                    {user.email}
-                  </Link>
-                </Typography>
-                <Typography variant="body1" sx={{ mt: 1 }}>
-                  <Box fontWeight="fontWeightMedium" display="inline">
-                    Faculty
-                  </Box>
-                  {": "}
-                  {user.faculty}
-                </Typography>
-                <Typography variant="body1" sx={{ mt: 1 }}>
-                  <Box fontWeight="fontWeightMedium" display="inline">
-                    Agreement start date
-                  </Box>
-                  {": "}
-                  {new Date(user.agreementStartDate).toLocaleDateString()}
-                </Typography>
-                <Typography variant="body1" sx={{ mt: 1 }}>
-                  <Box fontWeight="fontWeightMedium" display="inline">
-                    Agreement end date
-                  </Box>
-                  {": "}
-                  {new Date(user.agreementEndDate).toLocaleDateString()}
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
-          <Grid item xs={12}>
-            <Typography variant="h5" sx={{ padding: 2 }}>
-              Mentees ({user.mentees.length})
-            </Typography>
-            <List sx={{ width: "100%", bgcolor: "background.paper" }}>
-              {user.mentees.map(mentee => {
+                {": \u00A0"}
+                {value}
+              </Typography>
+            ))}
+            <Box sx={{ clear: "both" }} />
+          </PagePaper>
+        </Grid>
+        <Grid item xs={12} lg={6}>
+          <Paper>
+            <List>
+              {user.mentees.map((mentee, idx) => {
                 const menteeFullName = `${mentee.firstName} ${mentee.lastName}`
+                const isLast = idx === user.mentees.length - 1
                 return (
                   <Link
                     component={PendingLink}
                     to={`/dashboard/mentees/${mentee.id}`}
                     key={mentee.id}
                   >
-                    <ListItem>
+                    <ListItemButton>
                       <ListItemAvatar>
                         <BackgroundLetterAvatars name={menteeFullName} />
                       </ListItemAvatar>
@@ -220,14 +229,21 @@ export default function UserPage() {
                         primary={menteeFullName}
                         secondary={getHumanReadableMenteeStatus(mentee.status)}
                       />
-                    </ListItem>
+                    </ListItemButton>
+                    {isLast ? null : <Divider variant="inset" component="li" />}
                   </Link>
                 )
               })}
+              {user.mentees.length === 0 && (
+                <div style={{ textAlign: "center" }}>
+                  <Typography variant="h3">😕</Typography>
+                  <Typography variant="h5">Has no mentees!</Typography>
+                </div>
+              )}
             </List>
-          </Grid>
+          </Paper>
         </Grid>
-      </Paper>
-    </Box>
+      </Grid>
+    </Grid>
   )
 }

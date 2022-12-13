@@ -15,12 +15,11 @@ import type {
 } from "@remix-run/server-runtime"
 import { redirect } from "@remix-run/server-runtime"
 import { json } from "@remix-run/server-runtime"
+import invariant from "tiny-invariant"
+import sanitizeHtml from "sanitize-html"
 
 import CircularProgress from "@mui/material/CircularProgress"
 import TextField from "@mui/material/TextField"
-
-import { useForm } from "~/components/hooks/use-form"
-import { useMenteeList } from "~/routes/resources/mentees"
 import FormControl from "@mui/material/FormControl"
 import InputLabel from "@mui/material/InputLabel"
 import type { SelectChangeEvent } from "@mui/material/Select"
@@ -28,6 +27,12 @@ import Select from "@mui/material/Select"
 import OutlinedInput from "@mui/material/OutlinedInput"
 import MenuItem from "@mui/material/MenuItem"
 import Button from "@mui/material/Button"
+import Grid from "@mui/material/Grid"
+import Typography from "@mui/material/Typography"
+import FormHelperText from "@mui/material/FormHelperText"
+
+import { useMenteeList } from "~/routes/resources/mentees"
+import { useForm } from "~/components/hooks/use-form"
 import {
   getAllEmailTemplates,
   getUserAccessibleAssets,
@@ -38,13 +43,14 @@ import { validateAction, Zod } from "~/utils/validation"
 import * as z from "zod"
 import type { Mentee } from "~/models/mentee.server"
 import { getMenteeListItems } from "~/models/mentee.server"
-import sanitizeHtml from "sanitize-html"
 import {
   areAllowedVariables,
   resolveBody,
   sendEmail,
 } from "~/utils/email-service"
-import invariant from "tiny-invariant"
+import { PagePaper } from "~/components/layout"
+import { isEmptyHtml } from "~/utils/common"
+import localQuillStyles from "~/styles/quill.css"
 
 const ReactQuill = React.lazy(() => import("react-quill"))
 
@@ -59,6 +65,10 @@ export const links: LinksFunction = () => {
     {
       rel: "stylesheet",
       href: "https://unpkg.com/react-quill@1.3.3/dist/quill.snow.css",
+    },
+    {
+      rel: "stylesheet",
+      href: localQuillStyles,
     },
   ]
 }
@@ -82,16 +92,14 @@ export async function loader({ request }: LoaderArgs) {
   })
 }
 
-const schema = z
-  .object({
-    recipients: z.string(),
-    subject: Zod.requiredString("Title"),
-    body: Zod.requiredString("Body"),
-  })
-  .refine(data => {
-    const isEmptyHtml = data.body.replace(/<[^>]+>/g, "").trim() === ""
-    return !isEmptyHtml
-  }, "Body is required")
+const schema = z.object({
+  recipients: Zod.requiredString("Recipient"),
+  subject: Zod.requiredString("Title"),
+  body: Zod.requiredString("Body").refine(
+    body => !isEmptyHtml(body),
+    "Body is required",
+  ),
+})
 
 type ActionInput = z.TypeOf<typeof schema>
 
@@ -200,76 +208,114 @@ export default function EmailPage() {
     }
   }, [template])
 
+  const recipentsError = actionData?.errors?.recipients
+  const bodyError = actionData?.errors?.body
+
   return (
-    <form
-      method="post"
-      noValidate
-      onSubmit={e => {
-        e.preventDefault()
-        const template = editorRef.current?.unprivilegedEditor.getHTML()
-        const formData = new FormData(e.currentTarget)
-        formData.append("body", template)
-        submit(formData, { method: "post" })
-      }}
-    >
-      <FormControl fullWidth required>
-        <InputLabel id="recipients-label">To</InputLabel>
-        <Select
-          labelId="recipients-label"
-          id="recipients"
-          defaultValue={recipients}
-          input={<OutlinedInput label="To" />}
-          disabled={isMenteeListLoading}
-          onChange={e => setRecipients(e.target.value as string[])}
-          multiple
-          {...register("recipients")}
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{ color: "#505050", fontWeight: 600 }}
         >
-          {menteeList.map(mentee => (
-            <MenuItem key={mentee.id} value={mentee.email}>
-              {mentee.firstName} {mentee.lastName}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      <TextField
-        variant="outlined"
-        label="Subject"
-        fullWidth
-        required
-        {...register("subject")}
-      />
-      <FormControl fullWidth>
-        <InputLabel id="templates-label">Template</InputLabel>
-        <Select
-          labelId="templates-label"
-          id="templates"
-          defaultValue=""
-          input={<OutlinedInput label="Template" />}
-          onChange={handleChangeEmailTemplate}
-        >
-          <MenuItem value="">
-            <em>None</em>
-          </MenuItem>
-          {emailTemplates.map(template => (
-            <MenuItem key={template.id} value={template.id}>
-              {template.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      <React.Suspense fallback={<CircularProgress />}>
-        <ReactQuill
-          value={editorContent}
-          onChange={setEditorContent}
-          theme="snow"
-          style={{ height: 300 }}
-          ref={editorRef}
-        />
-      </React.Suspense>
-      <Button type="submit" disabled={isSending} variant="contained">
-        {isSending ? "Sending..." : "Send"}
-      </Button>
-    </form>
+          Send email
+        </Typography>
+      </Grid>
+      <Grid item xs={12}>
+        <PagePaper>
+          <form
+            method="post"
+            noValidate
+            onSubmit={e => {
+              e.preventDefault()
+              const template = editorRef.current?.unprivilegedEditor.getHTML()
+              const formData = new FormData(e.currentTarget)
+              formData.append("body", template)
+              submit(formData, { method: "post" })
+            }}
+          >
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <FormControl fullWidth required error={Boolean(recipentsError)}>
+                  <InputLabel id="recipients-label">To</InputLabel>
+                  <Select
+                    labelId="recipients-label"
+                    id="recipients"
+                    name="recipients"
+                    defaultValue={recipients}
+                    input={<OutlinedInput label="To" />}
+                    disabled={isMenteeListLoading}
+                    onChange={e => setRecipients(e.target.value as string[])}
+                    multiple
+                  >
+                    {menteeList.map(mentee => (
+                      <MenuItem key={mentee.id} value={mentee.email}>
+                        {mentee.firstName} {mentee.lastName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <FormHelperText>{recipentsError}</FormHelperText>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  variant="outlined"
+                  label="Subject"
+                  fullWidth
+                  required
+                  {...register("subject")}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel id="templates-label">Template</InputLabel>
+                  <Select
+                    labelId="templates-label"
+                    id="templates"
+                    defaultValue=""
+                    input={<OutlinedInput label="Template" />}
+                    onChange={handleChangeEmailTemplate}
+                  >
+                    <MenuItem value="">
+                      <em>None</em>
+                    </MenuItem>
+                    {emailTemplates.map(template => (
+                      <MenuItem key={template.id} value={template.id}>
+                        {template.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <React.Suspense fallback={<CircularProgress />}>
+                  <FormControl fullWidth error={Boolean(bodyError)}>
+                    <ReactQuill
+                      value={editorContent}
+                      onChange={setEditorContent}
+                      theme="snow"
+                      ref={editorRef}
+                    />
+                    <FormHelperText>{bodyError}</FormHelperText>
+                  </FormControl>
+                </React.Suspense>
+              </Grid>
+              <Grid item xs={12}>
+                <Button
+                  type="submit"
+                  disabled={isSending}
+                  variant="contained"
+                  fullWidth
+                >
+                  {isSending ? "Sending..." : "Send"}
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+        </PagePaper>
+      </Grid>
+    </Grid>
   )
 }
 

@@ -1,12 +1,5 @@
 import * as React from "react"
 import * as z from "zod"
-import Button from "@mui/material/Button"
-import FormControl from "@mui/material/FormControl"
-import InputLabel from "@mui/material/InputLabel"
-import MenuItem from "@mui/material/MenuItem"
-import OutlinedInput from "@mui/material/OutlinedInput"
-import Select from "@mui/material/Select"
-import TextField from "@mui/material/TextField"
 import {
   Form,
   useActionData,
@@ -23,8 +16,17 @@ import type {
 import { redirect } from "@remix-run/server-runtime"
 import { json } from "@remix-run/server-runtime"
 import invariant from "tiny-invariant"
-import CircularProgress from "@mui/material/CircularProgress"
 import sanitizeHtml from "sanitize-html"
+
+import Button from "@mui/material/Button"
+import FormControl from "@mui/material/FormControl"
+import InputLabel from "@mui/material/InputLabel"
+import MenuItem from "@mui/material/MenuItem"
+import OutlinedInput from "@mui/material/OutlinedInput"
+import Select from "@mui/material/Select"
+import TextField from "@mui/material/TextField"
+import CircularProgress from "@mui/material/CircularProgress"
+import Grid from "@mui/material/Grid"
 
 import { useForm } from "~/components/hooks/use-form"
 import {
@@ -36,6 +38,9 @@ import { useUserList } from "~/routes/resources/users"
 import { requireUser } from "~/session.server"
 import { validateAction, Zod } from "~/utils/validation"
 import { getUserById, isUserId } from "~/models/user.server"
+import { isEmptyHtml } from "~/utils/common"
+import { PagePaper } from "~/components/layout"
+import Typography from "@mui/material/Typography"
 
 const ReactQuill = React.lazy(() => import("react-quill"))
 
@@ -81,8 +86,7 @@ const schema = z
     if (!data.template) {
       return false
     }
-    const isEmptyHtml = data.template.replace(/<[^>]+>/g, "").trim() === ""
-    return !isEmptyHtml
+    return !isEmptyHtml(data.template)
   }, "Template is required")
 
 type ActionInput = z.TypeOf<typeof schema>
@@ -140,7 +144,7 @@ export async function action({ params, request }: ActionArgs) {
   return redirect(`/dashboard/assets/${assetId}`)
 }
 
-export default function AssetPage() {
+export default function AssetEditPage() {
   const submit = useSubmit()
   const { asset } = useLoaderData<typeof loader>()
   const actionData = useActionData()
@@ -152,71 +156,104 @@ export default function AssetPage() {
   const editorRef = React.useRef<any>(null)
 
   return (
-    <Form
-      method="post"
-      encType="multipart/form-data"
-      noValidate
-      onSubmit={e => {
-        e.preventDefault()
-        const template = editorRef.current?.unprivilegedEditor.getHTML()
-        const formData = new FormData(e.currentTarget)
-        formData.append("template", template)
-        submit(formData, { method: "post" })
-      }}
-    >
-      <TextField
-        variant="outlined"
-        label="Name"
-        defaultValue={asset.name}
-        fullWidth
-        required
-        {...register("name")}
-      />
-      <TextField
-        variant="outlined"
-        label="Description"
-        defaultValue={asset.description}
-        fullWidth
-        multiline
-        rows={3}
-        {...register("description")}
-      />
-      <FormControl fullWidth>
-        <InputLabel id="demo-multiple-name-label">Shared with</InputLabel>
-        <Select
-          labelId="demo-multiple-name-label"
-          id="demo-multiple-name"
-          input={<OutlinedInput label="Name" />}
-          defaultValue={asset.sharedUsers}
-          disabled={isUserListLoading}
-          multiple
-          {...register("sharedUsers")}
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{ color: "#505050", fontWeight: 600 }}
         >
-          {userList.map(user => (
-            <MenuItem key={user.id} value={user.id}>
-              {user.firstName} {user.lastName}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      {asset.type === "email-template" ? (
-        <React.Suspense fallback={<CircularProgress />}>
-          <ReactQuill
-            theme="snow"
-            style={{ height: 300 }}
-            ref={editorRef}
-            defaultValue={asset.src}
-          />
-        </React.Suspense>
-      ) : null}
-      <input
-        type="hidden"
-        name="type"
-        value={asset.type === "email-template" ? "email-template" : "file"}
-      />
-      <Button type="submit" variant="contained" disabled={isBusy}>
-        {isBusy ? "Saving..." : "Save"}
-      </Button>
-    </Form>
+          Edit asset
+        </Typography>
+      </Grid>
+      <Grid item xs={12}>
+        <PagePaper>
+          <Form
+            method="post"
+            noValidate
+            onSubmit={e => {
+              e.preventDefault()
+              const template = editorRef.current?.unprivilegedEditor.getHTML()
+              const formData = new FormData(e.currentTarget)
+              formData.append("template", template)
+              submit(formData, { method: "post" })
+            }}
+          >
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  variant="outlined"
+                  label="Name"
+                  defaultValue={asset.name}
+                  fullWidth
+                  required
+                  {...register("name")}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  variant="outlined"
+                  label="Description"
+                  defaultValue={asset.description}
+                  fullWidth
+                  multiline
+                  rows={3}
+                  {...register("description")}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel id="demo-multiple-name-label">
+                    Shared with
+                  </InputLabel>
+                  <Select
+                    labelId="demo-multiple-name-label"
+                    id="demo-multiple-name"
+                    input={<OutlinedInput label="Name" />}
+                    defaultValue={asset.sharedUsers}
+                    disabled={isUserListLoading}
+                    multiple
+                    {...register("sharedUsers")}
+                  >
+                    {userList.map(user => (
+                      <MenuItem key={user.id} value={user.id}>
+                        {user.firstName} {user.lastName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                {asset.type === "email-template" ? (
+                  <React.Suspense fallback={<CircularProgress />}>
+                    <ReactQuill
+                      theme="snow"
+                      ref={editorRef}
+                      defaultValue={asset.src}
+                    />
+                  </React.Suspense>
+                ) : null}
+              </Grid>
+            </Grid>
+            <input
+              type="hidden"
+              name="type"
+              value={
+                asset.type === "email-template" ? "email-template" : "file"
+              }
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{ mt: 3 }}
+              disabled={isBusy}
+              fullWidth
+            >
+              {isBusy ? "Saving..." : "Save"}
+            </Button>
+          </Form>
+        </PagePaper>
+      </Grid>
+    </Grid>
   )
 }

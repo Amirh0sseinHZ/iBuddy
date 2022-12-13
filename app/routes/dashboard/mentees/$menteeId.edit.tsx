@@ -10,8 +10,6 @@ import { json } from "@remix-run/node"
 import invariant from "tiny-invariant"
 
 import {
-  Box,
-  Paper,
   Button,
   TextField,
   FormControlLabel,
@@ -24,6 +22,7 @@ import {
   Select,
   MenuItem,
   OutlinedInput,
+  Typography,
 } from "@mui/material"
 import {
   Form,
@@ -46,6 +45,7 @@ import type { User } from "~/models/user.server"
 import { getBuddyById, Role } from "~/models/user.server"
 import { useBuddyList } from "../../resources/buddies"
 import { getHumanReadableMenteeStatus } from "~/utils/common"
+import { PagePaper } from "~/components/layout"
 
 export const meta: MetaFunction = ({ data }) => {
   const { mentee } = data as SerializeFrom<typeof loader>
@@ -153,17 +153,18 @@ export default function EditMenteePage() {
   }
 
   return (
-    <Box sx={{ width: "100%", mt: 6 }}>
-      <Paper sx={{ width: "100%", mb: 2 }}>
-        <Box
-          sx={{
-            paddingX: 4,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            pt: 3,
-          }}
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{ color: "#505050", fontWeight: 600 }}
         >
+          Edit mentee
+        </Typography>
+      </Grid>
+      <Grid item xs={12}>
+        <PagePaper>
           <Form method="post" noValidate>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
@@ -310,8 +311,8 @@ export default function EditMenteePage() {
                   <Select
                     labelId="buddy-select-label"
                     label="Buddy"
+                    defaultValue={mentee.buddyId}
                     {...register("buddyId")}
-                    defaultValue={mentee.buddyId.split("#")[1]}
                   >
                     {buddyList.map(buddy => (
                       <MenuItem key={buddy.id} value={buddy.id}>
@@ -344,14 +345,14 @@ export default function EditMenteePage() {
               fullWidth
               type="submit"
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ mt: 3 }}
               disabled={isBusy}
             >
               {isBusy ? "Saving..." : "Save"}
             </Button>
           </Form>
-        </Box>
-      </Paper>
-    </Box>
+        </PagePaper>
+      </Grid>
+    </Grid>
   )
 }

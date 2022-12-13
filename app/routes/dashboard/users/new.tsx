@@ -4,8 +4,6 @@ import { redirect } from "@remix-run/node"
 import { json } from "@remix-run/node"
 
 import {
-  Box,
-  Paper,
   Button,
   TextField,
   Grid,
@@ -13,6 +11,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Typography,
 } from "@mui/material"
 import {
   Form,
@@ -25,6 +24,7 @@ import { useForm } from "~/components/hooks/use-form"
 import { validateAction, Zod } from "~/utils/validation"
 import { requireUser } from "~/session.server"
 import { createUser, isEmailUnique, Role } from "~/models/user.server"
+import { PagePaper } from "~/components/layout"
 
 export const meta: MetaFunction = () => {
   return {
@@ -129,17 +129,18 @@ export default function NewUserPage() {
   const isBusy = transition.state !== "idle" && Boolean(transition.submission)
 
   return (
-    <Box sx={{ width: "100%", mt: 6 }}>
-      <Paper sx={{ width: "100%", mb: 2 }}>
-        <Box
-          sx={{
-            paddingX: 4,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            pt: 3,
-          }}
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{ color: "#505050", fontWeight: 600 }}
         >
+          New user
+        </Typography>
+      </Grid>
+      <Grid item xs={12}>
+        <PagePaper>
           <Form method="post" noValidate>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
@@ -226,14 +227,14 @@ export default function NewUserPage() {
               fullWidth
               type="submit"
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ mt: 3 }}
               disabled={isBusy}
             >
               Register {isBusy && "..."}
             </Button>
           </Form>
-        </Box>
-      </Paper>
-    </Box>
+        </PagePaper>
+      </Grid>
+    </Grid>
   )
 }

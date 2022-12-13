@@ -16,21 +16,21 @@ import {
 import invariant from "tiny-invariant"
 
 import {
-  Box,
   Button,
   FormControl,
   Grid,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
   TextField,
+  Typography,
 } from "@mui/material"
 
 import { requireUser } from "~/session.server"
 import { getUserByEmail, Role, updateUser } from "~/models/user.server"
 import { validateAction, Zod } from "~/utils/validation"
 import { useForm } from "~/components/hooks/use-form"
+import { PagePaper } from "~/components/layout"
 
 export const meta: MetaFunction = ({ data }) => {
   const { user } = data as SerializeFrom<typeof loader>
@@ -149,17 +149,18 @@ export default function EditUserPage() {
   }
 
   return (
-    <Box sx={{ width: "100%", mt: 6 }}>
-      <Paper sx={{ width: "100%", mb: 2 }}>
-        <Box
-          sx={{
-            paddingX: 4,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            pt: 3,
-          }}
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{ color: "#505050", fontWeight: 600 }}
         >
+          Edit user
+        </Typography>
+      </Grid>
+      <Grid item xs={12}>
+        <PagePaper>
           <Form method="post" noValidate>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
@@ -256,14 +257,14 @@ export default function EditUserPage() {
               fullWidth
               type="submit"
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ mt: 3 }}
               disabled={isBusy}
             >
               {isBusy ? "Saving..." : "Save"}
             </Button>
           </Form>
-        </Box>
-      </Paper>
-    </Box>
+        </PagePaper>
+      </Grid>
+    </Grid>
   )
 }

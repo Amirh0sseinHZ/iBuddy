@@ -1,5 +1,10 @@
+import * as React from "react"
 import * as z from "zod"
-import type { ActionArgs, MetaFunction } from "@remix-run/server-runtime"
+import type {
+  ActionArgs,
+  LoaderArgs,
+  MetaFunction,
+} from "@remix-run/server-runtime"
 import { redirect } from "@remix-run/server-runtime"
 import { json } from "@remix-run/server-runtime"
 import type {
@@ -28,6 +33,8 @@ import FormControl from "@mui/material/FormControl"
 import Select from "@mui/material/Select"
 import MenuItem from "@mui/material/MenuItem"
 import InputLabel from "@mui/material/InputLabel"
+import CircularProgress from "@mui/material/CircularProgress"
+import FormHelperText from "@mui/material/FormHelperText"
 
 import {
   createS3FileUploadHandler,
@@ -42,8 +49,8 @@ import { requireUserId } from "~/session.server"
 import { useUserList } from "~/routes/resources/users"
 import OutlinedInput from "@mui/material/OutlinedInput"
 import { getUserById, isUserId } from "~/models/user.server"
-import * as React from "react"
-import { CircularProgress } from "@mui/material"
+import { isEmptyHtml } from "~/utils/common"
+import { PagePaper } from "~/components/layout"
 
 const ReactQuill = React.lazy(() => import("react-quill"))
 
@@ -51,6 +58,15 @@ export const meta: MetaFunction = () => {
   return {
     title: "New Asset - iBuddy",
   }
+}
+
+export function loader({ request }: LoaderArgs) {
+  const url = new URL(request.url)
+  const type = url.searchParams.get("type") ?? ""
+  if (!["file", "email_template"].includes(type)) {
+    return redirect("?type=file")
+  }
+  return null
 }
 
 const UPLOAD_FIELD_NAME = "file"
@@ -87,7 +103,7 @@ const schema = z
     file: z.instanceof(File, {
       message: "File is required",
     }),
-    template: Zod.requiredString(),
+    template: Zod.requiredString("Body"),
     sharedUsers: z.string().optional(),
     type: z.enum(["file", "email-template"]),
   })
@@ -95,14 +111,30 @@ const schema = z
     file: true,
     template: true,
   })
-  .refine(data => data.file || data.template, "file or template required.")
-  .refine(data => {
-    if (data.type === "email-template" && data.template) {
-      const isEmptyHtml = data.template.replace(/<[^>]+>/g, "").trim() === ""
-      return !isEmptyHtml
-    }
-    return true
-  }, "Template is required.")
+  .refine(
+    data => {
+      if (data.type === "file") {
+        return data.file
+      }
+      return true
+    },
+    {
+      message: "File is required",
+      path: ["file"],
+    },
+  )
+  .refine(
+    data => {
+      if (data.type === "email-template") {
+        return data.template && !isEmptyHtml(data.template)
+      }
+      return true
+    },
+    {
+      message: "Template is required",
+      path: ["template"],
+    },
+  )
 
 type ActionInput = z.TypeOf<typeof schema>
 
@@ -204,37 +236,54 @@ export default function NewAssetPage() {
   const [searchParams] = useSearchParams()
   const typeParam = searchParams.get("type")
 
-  const renderPage = () => {
-    switch (typeParam) {
-      case "file":
-        return <CreateFileAsset />
-      case "email_template":
-        return <CreateEmailTemplateAsset />
-      default:
-        return <ChooseType />
-    }
-  }
-
   return (
-    <div style={{ width: "100%" }}>
-      <h1>New Asset</h1>
-      {renderPage()}
-    </div>
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{ color: "#505050", fontWeight: 600 }}
+        >
+          New asset
+        </Typography>
+      </Grid>
+      <Grid item xs={12}>
+        <ChooseType />
+      </Grid>
+      <Grid item xs={12}>
+        <PagePaper>
+          {typeParam === "file" && <CreateFileAsset />}
+          {typeParam === "email_template" && <CreateEmailTemplateAsset />}
+        </PagePaper>
+      </Grid>
+    </Grid>
   )
 }
 
 function ChooseType() {
+  const [searchParams] = useSearchParams()
+  const typeParam = searchParams.get("type")
+
   return (
     <Grid container spacing={2}>
       <Grid item xs={6}>
         <Link to="?type=file">
-          <Card sx={{ minWidth: 275 }}>
+          <Card
+            sx={{
+              minWidth: 275,
+              borderStyle: "solid",
+              borderWidth: 1,
+              borderColor:
+                typeParam === "file" ? "primary.light" : "background.paper",
+            }}
+            raised={typeParam === "file"}
+          >
             <CardContent>
               <Typography variant="h5" component="div">
                 File
               </Typography>
               <Typography variant="body2">
-                A file such as a PDF, image, or a video.
+                Upload a file such as a PDF, png, or a jpg.
               </Typography>
             </CardContent>
           </Card>
@@ -242,13 +291,24 @@ function ChooseType() {
       </Grid>
       <Grid item xs={6}>
         <Link to="?type=email_template">
-          <Card sx={{ minWidth: 275 }}>
+          <Card
+            sx={{
+              minWidth: 275,
+              borderStyle: "solid",
+              borderWidth: 1,
+              borderColor:
+                typeParam === "email_template"
+                  ? "primary.light"
+                  : "background.paper",
+            }}
+            raised={typeParam === "email_template"}
+          >
             <CardContent>
               <Typography variant="h5" component="div">
                 Email template
               </Typography>
               <Typography variant="body2">
-                A template for an email that can be sent to users.
+                Create a template for an email that can be sent to your mentees.
               </Typography>
             </CardContent>
           </Card>
@@ -267,55 +327,73 @@ function CreateFileAsset() {
 
   return (
     <Form method="post" encType="multipart/form-data" noValidate>
-      <TextField
-        variant="outlined"
-        label="Name"
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <TextField
+            variant="outlined"
+            label="Name"
+            fullWidth
+            required
+            {...register("name")}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            variant="outlined"
+            label="Description"
+            fullWidth
+            multiline
+            rows={3}
+            {...register("description")}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            label="File"
+            type="file"
+            placeholder=" "
+            InputLabelProps={{
+              shrink: true,
+            }}
+            inputProps={{
+              accept: ALLOWED_FILE_TYPES.join(","),
+            }}
+            required
+            fullWidth
+            {...register(UPLOAD_FIELD_NAME)}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <FormControl fullWidth>
+            <InputLabel id="demo-multiple-name-label">Shared with</InputLabel>
+            <Select
+              labelId="demo-multiple-name-label"
+              id="demo-multiple-name"
+              defaultValue={[]}
+              input={<OutlinedInput label="Name" />}
+              disabled={isUserListLoading}
+              multiple
+              {...register("sharedUsers")}
+            >
+              {userList.map(user => (
+                <MenuItem key={user.id} value={user.id}>
+                  {user.firstName} {user.lastName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+      </Grid>
+      <Button
         fullWidth
-        required
-        {...register("name")}
-      />
-      <TextField
-        variant="outlined"
-        label="Description"
-        fullWidth
-        multiline
-        rows={3}
-        {...register("description")}
-      />
-      <TextField
-        label="File"
-        type="file"
-        placeholder=" "
-        InputLabelProps={{
-          shrink: true,
-        }}
-        inputProps={{
-          accept: ALLOWED_FILE_TYPES.join(","),
-        }}
-        required
-        {...register(UPLOAD_FIELD_NAME)}
-      />
-      <FormControl fullWidth>
-        <InputLabel id="demo-multiple-name-label">Shared with</InputLabel>
-        <Select
-          labelId="demo-multiple-name-label"
-          id="demo-multiple-name"
-          defaultValue={[]}
-          input={<OutlinedInput label="Name" />}
-          disabled={isUserListLoading}
-          multiple
-          {...register("sharedUsers")}
-        >
-          {userList.map(user => (
-            <MenuItem key={user.id} value={user.id}>
-              {user.firstName} {user.lastName}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      <input type="hidden" name="type" value="file" />
-      <Button type="submit" variant="contained" disabled={isBusy}>
-        Create
+        sx={{ mt: 3 }}
+        type="submit"
+        variant="contained"
+        disabled={isBusy}
+        name="type"
+        value="file"
+      >
+        {isBusy ? "Uploading..." : "Upload"}
       </Button>
     </Form>
   )
@@ -331,8 +409,11 @@ function CreateEmailTemplateAsset() {
   // can't figure out the correct type for dynamically imported ReactQuill
   const editorRef = React.useRef<any>(null)
 
+  const templateError = actionData?.errors?.template
+  const sharedUsersError = actionData?.errors?.sharedUsers
+
   return (
-    <form
+    <Form
       method="post"
       noValidate
       onSubmit={e => {
@@ -343,46 +424,66 @@ function CreateEmailTemplateAsset() {
         submit(formData, { method: "post" })
       }}
     >
-      <TextField
-        variant="outlined"
-        label="Name"
-        fullWidth
-        required
-        {...register("name")}
-      />
-      <TextField
-        variant="outlined"
-        label="Description"
-        fullWidth
-        multiline
-        rows={3}
-        {...register("description")}
-      />
-      <React.Suspense fallback={<CircularProgress />}>
-        <ReactQuill theme="snow" style={{ height: 300 }} ref={editorRef} />
-      </React.Suspense>
-      <FormControl fullWidth>
-        <InputLabel id="demo-multiple-name-label">Shared with</InputLabel>
-        <Select
-          labelId="demo-multiple-name-label"
-          id="demo-multiple-name"
-          defaultValue={[]}
-          input={<OutlinedInput label="Name" />}
-          disabled={isUserListLoading}
-          multiple
-          {...register("sharedUsers")}
-        >
-          {userList.map(user => (
-            <MenuItem key={user.id} value={user.id}>
-              {user.firstName} {user.lastName}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <TextField
+            variant="outlined"
+            label="Name"
+            fullWidth
+            required
+            {...register("name")}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            variant="outlined"
+            label="Description"
+            fullWidth
+            multiline
+            rows={3}
+            {...register("description")}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <React.Suspense fallback={<CircularProgress />}>
+            <FormControl fullWidth error={Boolean(templateError)}>
+              <ReactQuill theme="snow" ref={editorRef} />
+              <FormHelperText>{templateError}</FormHelperText>
+            </FormControl>
+          </React.Suspense>
+        </Grid>
+        <Grid item xs={12}>
+          <FormControl fullWidth error={Boolean(sharedUsersError)}>
+            <InputLabel id="demo-multiple-name-label">Shared with</InputLabel>
+            <Select
+              labelId="demo-multiple-name-label"
+              id="demo-multiple-name"
+              defaultValue={[]}
+              input={<OutlinedInput label="Name" />}
+              disabled={isUserListLoading}
+              multiple
+              {...register("sharedUsers")}
+            >
+              {userList.map(user => (
+                <MenuItem key={user.id} value={user.id}>
+                  {user.firstName} {user.lastName}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>{sharedUsersError}</FormHelperText>
+          </FormControl>
+        </Grid>
+      </Grid>
       <input type="hidden" name="type" value="email-template" />
-      <Button type="submit" disabled={isBusy} variant="contained">
+      <Button
+        type="submit"
+        disabled={isBusy}
+        variant="contained"
+        sx={{ mt: 3 }}
+        fullWidth
+      >
         {isBusy ? "Creating..." : "Create"}
       </Button>
-    </form>
+    </Form>
   )
 }

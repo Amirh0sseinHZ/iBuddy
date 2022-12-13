@@ -29,7 +29,6 @@ import {
   mdiAccountPlus,
   mdiAccountGroup,
   mdiEmailPlus,
-  mdiAccountMultiple,
   mdiFilePlus,
   mdiFileDocumentMultiple,
   mdiAccountSupervisorCircleOutline,
@@ -211,16 +210,18 @@ export default function DashboardRoute() {
             </ListItemButton>
           </PendingNavLink>
           <Divider sx={{ my: 1 }} />
-          <ListSubheader component="div" inset>
-            Mentee management
-          </ListSubheader>
+          {isDrawerOpen ? (
+            <ListSubheader component="div" inset>
+              Mentee management
+            </ListSubheader>
+          ) : null}
           <PendingNavLink
             to="/dashboard/mentees"
             activeClassName={linkActiveClassName}
           >
             <ListItemButton>
               <ListItemIcon>
-                <Icon path={mdiAccountGroup} size={1} />
+                <Icon path={mdiAccountSupervisorCircleOutline} size={1} />
               </ListItemIcon>
               <ListItemText primary="Mentees" />
             </ListItemButton>
@@ -232,7 +233,7 @@ export default function DashboardRoute() {
             >
               <ListItemButton>
                 <ListItemIcon>
-                  <Icon path={mdiAccountPlus} size={1} />
+                  <Icon path={mdiAccountPlusOutline} size={1} />
                 </ListItemIcon>
                 <ListItemText primary="New mentee" />
               </ListItemButton>
@@ -252,16 +253,18 @@ export default function DashboardRoute() {
           {!isBuddy ? (
             <>
               <Divider sx={{ my: 1 }} />
-              <ListSubheader component="div" inset>
-                User management
-              </ListSubheader>
+              {isDrawerOpen ? (
+                <ListSubheader component="div" inset>
+                  User management
+                </ListSubheader>
+              ) : null}
               <PendingNavLink
                 to="/dashboard/users"
                 activeClassName={linkActiveClassName}
               >
                 <ListItemButton>
                   <ListItemIcon>
-                    <Icon path={mdiAccountSupervisorCircleOutline} size={1} />
+                    <Icon path={mdiAccountGroup} size={1} />
                   </ListItemIcon>
                   <ListItemText primary="Users" />
                 </ListItemButton>
@@ -272,7 +275,7 @@ export default function DashboardRoute() {
               >
                 <ListItemButton>
                   <ListItemIcon>
-                    <Icon path={mdiAccountPlusOutline} size={1} />
+                    <Icon path={mdiAccountPlus} size={1} />
                   </ListItemIcon>
                   <ListItemText primary="New user" />
                 </ListItemButton>
@@ -280,9 +283,11 @@ export default function DashboardRoute() {
             </>
           ) : null}
           <Divider sx={{ my: 1 }} />
-          <ListSubheader component="div" inset>
-            Asset management
-          </ListSubheader>
+          {isDrawerOpen ? (
+            <ListSubheader component="div" inset>
+              Asset management
+            </ListSubheader>
+          ) : null}
           <PendingNavLink
             to="/dashboard/assets"
             activeClassName={linkActiveClassName}
@@ -318,15 +323,26 @@ export default function DashboardRoute() {
           flexGrow: 1,
           height: "100vh",
           overflow: "auto",
+          position: "relative",
         }}
       >
         <Toolbar />
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
           <Grid container spacing={3} px={3}>
-            <Outlet />
+            <Box sx={{ width: "100%", mt: 4 }}>
+              <Outlet />
+            </Box>
           </Grid>
-          <Copyright sx={{ pt: 4 }} />
         </Container>
+        <div
+          style={{
+            position: "fixed",
+            bottom: 0,
+            right: 0,
+          }}
+        >
+          <Copyright sx={{ px: 4, py: 1.5, textAlign: "right" }} />
+        </div>
       </Box>
     </Box>
   )
