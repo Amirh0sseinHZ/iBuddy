@@ -118,13 +118,16 @@ export async function verifyLogin(
   email: UserEmail,
   password: Password["password"],
 ): Promise<User | null> {
-  const userPassword = await getUserPasswordByEmail(email)
+  // we save all emails as lowercase in the db
+  const maybeEmailInDb = email.toLowerCase()
+
+  const userPassword = await getUserPasswordByEmail(maybeEmailInDb)
   if (!userPassword) {
     return null
   }
 
   const isValid = await bcrypt.compare(password, userPassword.password)
-  return isValid ? await getUserByEmail(email) : null
+  return isValid ? await getUserByEmail(maybeEmailInDb) : null
 }
 
 export async function getBuddyById(id: UserId): Promise<User | null> {
