@@ -2,6 +2,7 @@ node_modules
 
 /server/index.js
 /server/index.js.map
+/server/_assets
 /public/build
 preferences.arc
 sam.json

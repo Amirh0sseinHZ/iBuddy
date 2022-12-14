@@ -1,19 +1,12 @@
+import * as z from "zod"
 import type { ActionFunction, MetaFunction } from "@remix-run/node"
 import { json } from "@remix-run/node"
-import {
-  Form,
-  Link,
-  useActionData,
-  useSearchParams,
-  useTransition,
-} from "@remix-run/react"
-import * as z from "zod"
+import { Form, Link, useActionData, useTransition } from "@remix-run/react"
 
 import {
   TextField,
   Typography,
   Button,
-  Grid,
   Checkbox,
   FormControlLabel,
   Container,
@@ -30,12 +23,57 @@ import { safeRedirect, useRedirectToValue } from "~/utils/redirect"
 import { useForm } from "~/components/hooks/use-form"
 import { Copyright } from "~/components/coypright"
 
+export const meta: MetaFunction = () => {
+  return {
+    title: "Sign In - iBuddy",
+  }
+}
+
+const schema = z.object({
+  email: Zod.email(),
+  password: z
+    .string({
+      required_error: "Password is required",
+    })
+    .min(1, "Password is required"),
+  remember: z.enum(["on"]).optional(),
+  redirectTo: z.string().optional(),
+})
+
+type ActionInput = z.TypeOf<typeof schema>
+
+export const action: ActionFunction = async ({ request }) => {
+  const { formData, errors } = await validateAction<ActionInput>({
+    request,
+    schema,
+  })
+  if (errors) {
+    return json({ errors }, { status: 400 })
+  }
+  const { email, password, remember, redirectTo: unsafeRedirectTo } = formData
+  const redirectTo = safeRedirect(unsafeRedirectTo)
+
+  const user = await verifyLogin(email, password)
+
+  if (!user) {
+    return json(
+      { errors: { email: "Invalid email or password" } },
+      { status: 400 },
+    )
+  }
+  return createUserSession({
+    request,
+    userId: user.id,
+    remember: remember === "on",
+    redirectTo,
+  })
+}
+
 export default function SignInPage() {
-  const [searchParams] = useSearchParams()
   const redirectTo = useRedirectToValue()
   const actionData = useActionData()
   const transition = useTransition()
-  const isSubmitting = transition.state === "submitting"
+  const isBusy = transition.state !== "idle" && Boolean(transition.submission)
 
   const { register } = useForm(actionData?.errors)
 
@@ -83,83 +121,21 @@ export default function SignInPage() {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
+            disabled={isBusy}
           >
-            Sign In {isSubmitting && "..."}
+            Sign In {isBusy && "..."}
           </Button>
-          <Grid container>
-            <Grid item xs>
-              {/* Planned feature */}
-              {false && (
-                <Typography color="primary">
-                  <Link to="#" style={{ color: "inherit" }}>
-                    Forgot password?
-                  </Link>
-                </Typography>
-              )}
-            </Grid>
-            <Grid item>
-              <Typography color="primary">
-                <Link
-                  to={{
-                    pathname: "/auth/signup",
-                    search: searchParams.toString(),
-                  }}
-                  style={{ color: "inherit" }}
-                >
-                  Don't have an account? Sign Up
-                </Link>
-              </Typography>
-            </Grid>
-          </Grid>
+          {/* TODO: Planned feature */}
+          {false && (
+            <Typography color="primary">
+              <Link to="#" style={{ color: "inherit" }}>
+                Forgot password?
+              </Link>
+            </Typography>
+          )}
         </Form>
       </Box>
       <Copyright sx={{ mt: 8, mb: 4 }} />
     </Container>
   )
-}
-
-const schema = z.object({
-  email: Zod.email(),
-  password: z
-    .string({
-      required_error: "Password is required",
-    })
-    .min(1, "Password is required"),
-  remember: z.enum(["on"]).optional(),
-  redirectTo: z.string().optional(),
-})
-
-type ActionInput = z.TypeOf<typeof schema>
-
-export const action: ActionFunction = async ({ request }) => {
-  const { formData, errors } = await validateAction<ActionInput>({
-    request,
-    schema,
-  })
-  if (errors) {
-    return json({ errors }, { status: 400 })
-  }
-  const { email, password, remember, redirectTo: unsafeRedirectTo } = formData
-  const redirectTo = safeRedirect(unsafeRedirectTo)
-
-  const user = await verifyLogin(email, password)
-
-  if (!user) {
-    return json(
-      { errors: { email: "Invalid email or password" } },
-      { status: 400 },
-    )
-  }
-  return createUserSession({
-    request,
-    userId: user.id,
-    remember: remember === "on",
-    redirectTo,
-  })
-}
-
-export const meta: MetaFunction = () => {
-  return {
-    title: "Sign In",
-  }
 }

@@ -1,10 +1,13 @@
 import type { LoaderFunction } from "@remix-run/node"
 import { redirect } from "@remix-run/node"
+import { Link } from "@remix-run/react"
+
 import Button from "@mui/material/Button"
 import Paper from "@mui/material/Paper"
 import Box from "@mui/material/Box"
 import Grid from "@mui/material/Grid"
 import Typography from "@mui/material/Typography"
+
 import { Copyright } from "~/components/coypright"
 import { getUserId } from "~/session.server"
 
@@ -25,15 +28,14 @@ export default function Index() {
         sm={4}
         md={7}
         sx={{
-          backgroundImage:
-            "url(https://source.unsplash.com/random/?technology)",
+          backgroundImage: "url(/_static/landing-bg.jpg)",
           backgroundRepeat: "no-repeat",
           backgroundColor: t =>
             t.palette.mode === "light"
               ? t.palette.grey[50]
               : t.palette.grey[900],
           backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundPosition: "left",
         }}
       />
       <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
@@ -49,28 +51,17 @@ export default function Index() {
           <Typography component="h1" variant="h5">
             Heya!
           </Typography>
-          <Box sx={{ mt: 1 }}>
-            <form action="/auth/signup">
-              <Button
-                type="submit"
-                fullWidth
-                variant="outlined"
-                sx={{ mt: 3, mb: 2 }}
-              >
-                Sign up
-              </Button>
-            </form>
-            <form action="/auth/signup">
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={{ mb: 2 }}
-              >
-                Sign In
-              </Button>
-            </form>
-            <Copyright sx={{ mt: 5 }} />
+          <Box sx={{ mt: 2 }}>
+            <Button
+              component={Link}
+              to="/auth/signin"
+              fullWidth
+              variant="contained"
+              sx={{ mb: 2 }}
+            >
+              Sign In
+            </Button>
+            <Copyright sx={{ mt: 2 }} />
           </Box>
         </Box>
       </Grid>

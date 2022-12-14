@@ -1,8 +1,6 @@
-import * as React from "react"
-// import Container from "@mui/material/Container"
-// import Box from "@mui/material/Box"
+import type { PaperProps } from "@mui/material/Paper"
+import MuiPaper from "@mui/material/Paper"
 
-// TODO: temp
-export default function Layout({ children }: { children: React.ReactNode }) {
-  return <div>{children}</div>
+export function PagePaper(props: PaperProps) {
+  return <MuiPaper sx={{ width: "100%", px: 3, py: 2 }} {...props} />
 }

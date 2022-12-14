@@ -2,16 +2,18 @@ import Box from "@mui/material/Box"
 import TextField from "@mui/material/TextField"
 import Autocomplete from "@mui/material/Autocomplete"
 
+import type { CountryType } from "~/utils/country"
 import { countries } from "~/utils/country"
 
 export function CountrySelect(props: any) {
+  const { inputProps, ...restOfProps } = props
   return (
     <Autocomplete
       id="country-select-demo"
       options={countries}
       autoHighlight
-      getOptionLabel={(option: any) => option?.label}
-      renderOption={(props, option: any) => (
+      getOptionLabel={(option: CountryType) => option.label}
+      renderOption={(props, option: CountryType) => (
         <Box
           component="li"
           sx={{ "& > img": { mr: 2, flexShrink: 0 } }}
@@ -24,7 +26,7 @@ export function CountrySelect(props: any) {
             srcSet={`https://flagcdn.com/w40/${option.code.toLowerCase()}.png 2x`}
             alt=""
           />
-          {option?.label}
+          {option.label}
         </Box>
       )}
       renderInput={params => (
@@ -35,9 +37,10 @@ export function CountrySelect(props: any) {
             ...params.inputProps,
             autoComplete: "new-password", // disable autocomplete and autofill
           }}
-          {...props.inputProps}
+          {...inputProps}
         />
       )}
+      {...restOfProps}
     />
   )
 }

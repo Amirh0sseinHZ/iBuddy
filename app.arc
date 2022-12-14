@@ -3,6 +3,10 @@ iBuddy
 
 @aws
 region eu-central-1
+timeout 15
+
+@plugins
+architect/plugin-storage-private
 
 @http
 /*
@@ -11,13 +15,36 @@ region eu-central-1
 
 @static
 
+@storage-private
+useruploads
+
 @tables
-user
+users
+  id *String
+
+passwords
+  userId *String
+
+mentees
   pk *String
+  sk **String
 
-password
-  pk *String # userId
+assets
+  id *String
 
-mentee
-  pk *String # buddyId -> userId
-  sk **String # menteeId
+@tables-indexes
+mentees
+  buddyId *string
+  name menteesByBuddyId
+
+mentees
+  email *string
+  name menteeByEmail
+
+assets
+  ownerId *string
+  name assetsByOwnerId
+
+assets
+  searchableName *string
+  name assetBySearchableName
