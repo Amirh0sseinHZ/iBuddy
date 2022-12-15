@@ -12,6 +12,7 @@ import {
   Select,
   MenuItem,
   Typography,
+  FormHelperText,
 } from "@mui/material"
 import {
   Form,
@@ -135,6 +136,8 @@ export default function NewUserPage() {
   const transition = useTransition()
   const isBusy = transition.state !== "idle" && Boolean(transition.submission)
 
+  const roleError = actionData?.errors?.role
+
   return (
     <Grid container spacing={2}>
       <Grid item xs={12}>
@@ -184,13 +187,13 @@ export default function NewUserPage() {
                 />
               </Grid>
               <Grid item xs={12}>
-                <FormControl fullWidth>
+                <FormControl fullWidth error={roleError}>
                   <InputLabel id="user-role">User role</InputLabel>
                   <Select
                     labelId="user-role"
                     label="User role"
                     defaultValue={roles[0].role}
-                    disabled={roles.filter(role => !role.disabled).length <= 1}
+                    readOnly={roles.filter(role => !role.disabled).length <= 1}
                     {...register("role")}
                   >
                     {roles.map(role => (
@@ -203,6 +206,7 @@ export default function NewUserPage() {
                       </MenuItem>
                     ))}
                   </Select>
+                  <FormHelperText>{roleError}</FormHelperText>
                 </FormControl>
               </Grid>
               <Grid item xs={12} sm={6}>
