@@ -77,7 +77,7 @@ export function loader({ request }: LoaderArgs) {
   if (!["file", "email_template"].includes(type)) {
     return redirect("?type=file")
   }
-  return { allowedEmailVariables: ALLOWED_EMAIL_VARIABLES }
+  return json({ allowedEmailVariables: ALLOWED_EMAIL_VARIABLES })
 }
 
 const UPLOAD_FIELD_NAME = "file"
@@ -481,33 +481,35 @@ function CreateEmailTemplateAsset() {
                   {Object.entries(allowedEmailVariables).map(
                     ([variable, description]) => (
                       <ListItem key={variable}>
-                        <Box
-                          component="div"
-                          sx={{
-                            display: "inline",
-                            py: 0.5,
-                            px: 1.25,
-                            bgcolor: theme =>
-                              theme.palette.mode === "dark"
-                                ? "#101010"
-                                : "#fff",
-                            color: theme =>
-                              theme.palette.mode === "dark"
-                                ? "grey.300"
-                                : "grey.800",
-                            border: "1px solid",
-                            borderColor: theme =>
-                              theme.palette.mode === "dark"
-                                ? "grey.800"
-                                : "grey.300",
-                            borderRadius: 2,
-                            fontSize: "0.875rem",
-                            fontWeight: "700",
-                          }}
-                        >
-                          <code>{`{{${variable}}}`}</code>
-                        </Box>
-                        {" — "} {description}
+                        <>
+                          <Box
+                            component="div"
+                            sx={{
+                              display: "inline",
+                              py: 0.5,
+                              px: 1.25,
+                              bgcolor: theme =>
+                                theme.palette.mode === "dark"
+                                  ? "#101010"
+                                  : "#fff",
+                              color: theme =>
+                                theme.palette.mode === "dark"
+                                  ? "grey.300"
+                                  : "grey.800",
+                              border: "1px solid",
+                              borderColor: theme =>
+                                theme.palette.mode === "dark"
+                                  ? "grey.800"
+                                  : "grey.300",
+                              borderRadius: 2,
+                              fontSize: "0.875rem",
+                              fontWeight: "700",
+                            }}
+                          >
+                            <code>{`{{${variable}}}`}</code>
+                          </Box>
+                          {" — "} {description}
+                        </>
                       </ListItem>
                     ),
                   )}
