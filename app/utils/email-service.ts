@@ -54,20 +54,20 @@ export async function sendEmail({
       "base64",
     )}?= <${SES_EMAIL_SOURCE}>`,
   })
-  // if (process.env.NODE_ENV === "development") {
-  //   console.log("sendEmailCommand", sendEmailCommand)
-  //   return
-  // }
   return await client.send(sendEmailCommand)
 }
 
-export const ALLOWED_VARIABLES: Array<keyof Mentee> = [
-  "firstName",
-  "lastName",
-  "email",
-  "gender",
-  "degree",
-]
+export const ALLOWED_EMAIL_VARIABLES: Partial<Record<keyof Mentee, string>> = {
+  firstName: "Mentee's first name",
+  lastName: "Mentee's last name",
+  email: "Mentee's email",
+  gender: "Mentee's gender",
+  degree: "Mentee's degree",
+}
+
+const ALLOWED_EMAIL_VARIABLES_KEYS = Object.keys(
+  ALLOWED_EMAIL_VARIABLES,
+) as Array<keyof Mentee>
 
 export function resolveBody({
   body,
@@ -76,7 +76,7 @@ export function resolveBody({
   body: string
   recipient: Mentee
 }) {
-  return ALLOWED_VARIABLES.reduce((acc, key) => {
+  return ALLOWED_EMAIL_VARIABLES_KEYS.reduce((acc, key) => {
     const searchValue = `{{${key}}}`
     const replaceValue = recipient[key]
     return acc.replaceAll(searchValue, replaceValue)
@@ -85,10 +85,10 @@ export function resolveBody({
 
 export function areAllowedVariables(
   some: string[],
-): some is typeof ALLOWED_VARIABLES {
+): some is typeof ALLOWED_EMAIL_VARIABLES_KEYS {
   return some.every(key => {
     const keyWithoutMustaches = key.slice(2, -2)
-    return ALLOWED_VARIABLES.includes(keyWithoutMustaches as any)
+    return ALLOWED_EMAIL_VARIABLES_KEYS.includes(keyWithoutMustaches as any)
   })
 }
 

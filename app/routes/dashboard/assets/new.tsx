@@ -16,6 +16,7 @@ import {
   Form,
   Link,
   useActionData,
+  useLoaderData,
   useSearchParams,
   useSubmit,
   useTransition,
@@ -35,6 +36,15 @@ import MenuItem from "@mui/material/MenuItem"
 import InputLabel from "@mui/material/InputLabel"
 import CircularProgress from "@mui/material/CircularProgress"
 import FormHelperText from "@mui/material/FormHelperText"
+import Alert from "@mui/material/Alert"
+import IconButton from "@mui/material/IconButton"
+import AlertTitle from "@mui/material/AlertTitle"
+import Collapse from "@mui/material/Collapse"
+import List from "@mui/material/List"
+import ListItem from "@mui/material/ListItem"
+import Box from "@mui/material/Box"
+import Icon from "@mdi/react"
+import { mdiChevronDown, mdiChevronUp } from "@mdi/js"
 
 import {
   createS3FileUploadHandler,
@@ -51,6 +61,7 @@ import OutlinedInput from "@mui/material/OutlinedInput"
 import { getUserById, isUserId } from "~/models/user.server"
 import { isEmptyHtml } from "~/utils/common"
 import { PagePaper } from "~/components/layout"
+import { ALLOWED_EMAIL_VARIABLES } from "~/utils/email-service"
 
 const ReactQuill = React.lazy(() => import("react-quill"))
 
@@ -66,7 +77,7 @@ export function loader({ request }: LoaderArgs) {
   if (!["file", "email_template"].includes(type)) {
     return redirect("?type=file")
   }
-  return null
+  return { allowedEmailVariables: ALLOWED_EMAIL_VARIABLES }
 }
 
 const UPLOAD_FIELD_NAME = "file"
@@ -400,6 +411,7 @@ function CreateFileAsset() {
 }
 
 function CreateEmailTemplateAsset() {
+  const { allowedEmailVariables } = useLoaderData<typeof loader>()
   const submit = useSubmit()
   const actionData = useActionData()
   const { register } = useForm(actionData?.errors)
@@ -411,6 +423,8 @@ function CreateEmailTemplateAsset() {
 
   const templateError = actionData?.errors?.template
   const sharedUsersError = actionData?.errors?.sharedUsers
+
+  const [isInfoOpen, setIsInfoOpen] = React.useState(true)
 
   return (
     <Form
@@ -446,6 +460,60 @@ function CreateEmailTemplateAsset() {
         </Grid>
         <Grid item xs={12}>
           <React.Suspense fallback={<CircularProgress />}>
+            <Alert
+              sx={{ mb: 2 }}
+              severity="info"
+              action={
+                <IconButton onClick={() => setIsInfoOpen(prev => !prev)}>
+                  <Icon
+                    path={isInfoOpen ? mdiChevronDown : mdiChevronUp}
+                    size={1}
+                  />
+                </IconButton>
+              }
+            >
+              <AlertTitle>Template variables</AlertTitle>
+              <Collapse in={isInfoOpen}>
+                <Typography>
+                  You can use the following variables in the email body:
+                </Typography>
+                <List dense>
+                  {Object.entries(allowedEmailVariables).map(
+                    ([variable, description]) => (
+                      <ListItem key={variable}>
+                        <Box
+                          component="div"
+                          sx={{
+                            display: "inline",
+                            py: 0.5,
+                            px: 1.25,
+                            bgcolor: theme =>
+                              theme.palette.mode === "dark"
+                                ? "#101010"
+                                : "#fff",
+                            color: theme =>
+                              theme.palette.mode === "dark"
+                                ? "grey.300"
+                                : "grey.800",
+                            border: "1px solid",
+                            borderColor: theme =>
+                              theme.palette.mode === "dark"
+                                ? "grey.800"
+                                : "grey.300",
+                            borderRadius: 2,
+                            fontSize: "0.875rem",
+                            fontWeight: "700",
+                          }}
+                        >
+                          <code>{`{{${variable}}}`}</code>
+                        </Box>
+                        {" — "} {description}
+                      </ListItem>
+                    ),
+                  )}
+                </List>
+              </Collapse>
+            </Alert>
             <FormControl fullWidth error={Boolean(templateError)}>
               <ReactQuill theme="snow" ref={editorRef} />
               <FormHelperText>{templateError}</FormHelperText>
