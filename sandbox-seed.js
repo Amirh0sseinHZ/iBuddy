@@ -36,11 +36,17 @@ const mentees = users.map(u => u.mentees).flat()
 const assets = users.map(u => u.assets).flat()
 users = users.map(u => u.user)
 
+const faqs = Array.from({ length: 10 }, () => {
+  const author = faker.helpers.arrayElement(users)
+  return buildFAQ({ authorId: author.id })
+})
+
 const seed = {
   users,
   passwords,
   mentees,
   assets,
+  faqs,
 }
 module.exports = seed
 //------------------------------------------------------------------------------
@@ -72,7 +78,7 @@ function buildUser(overrides = {}) {
     },
     password: {
       userId: id,
-      password: bcrypt.hashSync(faker.internet.password(), 10),
+      password: bcrypt.hashSync("password", 10),
       ...passwordOverrides,
     },
     mentees: Array.from(
@@ -180,6 +186,17 @@ function buildAsset(overrides = {}) {
     host: "local",
     createdAt: faker.date.recent().toISOString(),
     src,
+    ...overrides,
+  }
+}
+
+function buildFAQ(overrides = {}) {
+  return {
+    id: cuid(),
+    authorId: cuid(),
+    question: faker.lorem.sentence(),
+    answer: faker.lorem.paragraphs(3),
+    createdAt: faker.date.recent().toISOString(),
     ...overrides,
   }
 }

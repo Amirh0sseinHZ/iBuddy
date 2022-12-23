@@ -32,6 +32,9 @@ mentees
 assets
   id *String
 
+faqs
+  id *String
+
 @tables-indexes
 mentees
   buddyId *string
