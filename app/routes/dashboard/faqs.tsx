@@ -1,6 +1,10 @@
 import * as React from "react"
 import * as z from "zod"
-import type { ActionArgs, MetaFunction } from "@remix-run/server-runtime"
+import type {
+  ActionArgs,
+  LoaderArgs,
+  MetaFunction,
+} from "@remix-run/server-runtime"
 import {
   Form,
   Outlet,
@@ -36,13 +40,15 @@ export const meta: MetaFunction = () => {
   }
 }
 
-export async function loader() {
+export async function loader({ request }: LoaderArgs) {
+  const user = await requireUser(request)
   const faqs = await getAllFAQs()
   const sortedFAQs = faqs.sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
   return json({
     faqs: sortedFAQs.map(faq =>
       pick(faq, "id", "question", "updatedAt", "createdAt"),
     ),
+    canUserCreateFAQ: canUserCreateFAQ(user),
   })
 }
 
@@ -71,7 +77,7 @@ export async function action({ request }: ActionArgs) {
 }
 
 export default function FAQsIndexPage() {
-  const { faqs } = useLoaderData<typeof loader>()
+  const { faqs, canUserCreateFAQ } = useLoaderData<typeof loader>()
   const actionData = useActionData()
   const errors = actionData?.errors
   const { register } = useForm(errors)
@@ -102,39 +108,41 @@ export default function FAQsIndexPage() {
           </Typography>
         </Grid>
       </Grid>
-      <Grid item xs={12}>
-        <Accordion>
-          <AccordionSummary
-            expandIcon={<Icon path={mdiChevronDown} size={1} />}
-          >
-            <Typography>Add new FAQ</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Form method="post" ref={formRef} noValidate>
-              <Stack spacing={2}>
-                <TextField
-                  autoFocus
-                  required
-                  fullWidth
-                  label="Question"
-                  {...register("question")}
-                />
-                <TextField
-                  multiline
-                  fullWidth
-                  rows={4}
-                  label="Answer"
-                  required
-                  {...register("answer")}
-                />
-                <Button type="submit" disabled={isBusy}>
-                  Add
-                </Button>
-              </Stack>
-            </Form>
-          </AccordionDetails>
-        </Accordion>
-      </Grid>
+      {canUserCreateFAQ ? (
+        <Grid item xs={12}>
+          <Accordion>
+            <AccordionSummary
+              expandIcon={<Icon path={mdiChevronDown} size={1} />}
+            >
+              <Typography>Add new FAQ</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Form method="post" ref={formRef} noValidate>
+                <Stack spacing={2}>
+                  <TextField
+                    autoFocus
+                    required
+                    fullWidth
+                    label="Question"
+                    {...register("question")}
+                  />
+                  <TextField
+                    multiline
+                    fullWidth
+                    rows={4}
+                    label="Answer"
+                    required
+                    {...register("answer")}
+                  />
+                  <Button type="submit" disabled={isBusy}>
+                    Add
+                  </Button>
+                </Stack>
+              </Form>
+            </AccordionDetails>
+          </Accordion>
+        </Grid>
+      ) : null}
       <Grid item xs={12}>
         {faqs.map(faq => (
           <Accordion
