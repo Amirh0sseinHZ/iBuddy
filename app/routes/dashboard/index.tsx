@@ -83,7 +83,9 @@ export async function loader({ request }: LoaderArgs) {
           ).length,
           served: mentees.filter(mentee => mentee.status === "served").length,
           amp:
-            (mentees.filter(mentee => mentee.status === "arrived").length /
+            (mentees.filter(mentee =>
+              ["arrived", "met", "served"].includes(mentee.status),
+            ).length /
               mentees.filter(mentee => mentee.status !== "rejected").length) *
             100,
         },
@@ -118,7 +120,9 @@ export async function loader({ request }: LoaderArgs) {
       ).length,
       served: allMentees.filter(mentee => mentee.status === "served").length,
       amp:
-        (allMentees.filter(mentee => mentee.status === "arrived").length /
+        (allMentees.filter(mentee =>
+          ["arrived", "met", "served"].includes(mentee.status),
+        ).length /
           allMentees.filter(mentee => mentee.status !== "rejected").length) *
         100,
     },
@@ -171,7 +175,12 @@ export default function DashboardIndexPage() {
             value={counts.personal.mentees.unresponsive}
           />
           <StatsBox title="Served" value={counts.personal.mentees.served} />
-          <StatsBox title="AMP" value={counts.personal.mentees.amp} />
+          <StatsBox
+            title="AMP"
+            value={`${new Intl.NumberFormat("lt-LT", {
+              maximumFractionDigits: 2,
+            }).format(counts.personal.mentees.amp)}%`}
+          />
         </StatsGroup>
         <StatsGroup title="My assets">
           <StatsBox title="All" value={counts.personal.assets.all} />
@@ -213,7 +222,12 @@ export default function DashboardIndexPage() {
                 value={counts.all.mentees.unresponsive}
               />
               <StatsBox title="Served" value={counts.all.mentees.served} />
-              <StatsBox title="AMP" value={counts.all.mentees.amp} />
+              <StatsBox
+                title="AMP"
+                value={`${new Intl.NumberFormat("lt-LT", {
+                  maximumFractionDigits: 2,
+                }).format(counts.all.mentees.amp)}%`}
+              />
             </StatsGroup>
             <StatsGroup title="All assets">
               <StatsBox title="All" value={counts.all.assets.all} />
@@ -232,7 +246,7 @@ export default function DashboardIndexPage() {
   )
 }
 
-function StatsBox({ title, value }: { title: string; value: number }) {
+function StatsBox({ title, value }: { title: string; value: number | string }) {
   return (
     <Grid item xs={12} sm={6} md={3} lg={2}>
       <PagePaper sx={{ textAlign: "center" }}>
