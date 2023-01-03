@@ -30,6 +30,15 @@ import Button from "@mui/material/Button"
 import Grid from "@mui/material/Grid"
 import Typography from "@mui/material/Typography"
 import FormHelperText from "@mui/material/FormHelperText"
+import Box from "@mui/material/Box"
+import Collapse from "@mui/material/Collapse"
+import IconButton from "@mui/material/IconButton"
+import List from "@mui/material/List"
+import ListItem from "@mui/material/ListItem"
+import Alert from "@mui/material/Alert"
+import AlertTitle from "@mui/material/AlertTitle"
+import { mdiChevronDown, mdiChevronUp } from "@mdi/js"
+import Icon from "@mdi/react"
 
 import { useMenteeList } from "~/routes/resources/mentees"
 import { useForm } from "~/components/hooks/use-form"
@@ -44,6 +53,7 @@ import * as z from "zod"
 import type { Mentee } from "~/models/mentee.server"
 import { getMenteeListItems } from "~/models/mentee.server"
 import {
+  ALLOWED_EMAIL_VARIABLES,
   areAllowedVariables,
   resolveBody,
   sendEmail,
@@ -89,6 +99,7 @@ export async function loader({ request }: LoaderArgs) {
 
   return json({
     emailTemplates: emailTemplatesWithOnlyTheDataClientNeeds,
+    allowedEmailVariables: ALLOWED_EMAIL_VARIABLES,
   })
 }
 
@@ -168,7 +179,8 @@ export async function action({ request }: ActionArgs) {
 }
 
 export default function EmailPage() {
-  const { emailTemplates } = useLoaderData<typeof loader>()
+  const { emailTemplates, allowedEmailVariables } =
+    useLoaderData<typeof loader>()
   const submit = useSubmit()
   const actionData = useActionData()
   const { register } = useForm(actionData?.errors)
@@ -210,6 +222,8 @@ export default function EmailPage() {
 
   const recipentsError = actionData?.errors?.recipients
   const bodyError = actionData?.errors?.body
+
+  const [isInfoOpen, setIsInfoOpen] = React.useState(true)
 
   return (
     <Grid container spacing={2}>
@@ -290,6 +304,60 @@ export default function EmailPage() {
               </Grid>
               <Grid item xs={12}>
                 <React.Suspense fallback={<CircularProgress />}>
+                  <Alert
+                    sx={{ mb: 2 }}
+                    severity="info"
+                    action={
+                      <IconButton onClick={() => setIsInfoOpen(prev => !prev)}>
+                        <Icon
+                          path={isInfoOpen ? mdiChevronDown : mdiChevronUp}
+                          size={1}
+                        />
+                      </IconButton>
+                    }
+                  >
+                    <AlertTitle>Template variables</AlertTitle>
+                    <Collapse in={isInfoOpen}>
+                      <Typography>
+                        You can use the following variables in the email body:
+                      </Typography>
+                      <List dense>
+                        {Object.entries(allowedEmailVariables).map(
+                          ([variable, description]) => (
+                            <ListItem key={variable}>
+                              <Box
+                                component="div"
+                                sx={{
+                                  display: "inline",
+                                  py: 0.5,
+                                  px: 1.25,
+                                  bgcolor: theme =>
+                                    theme.palette.mode === "dark"
+                                      ? "#101010"
+                                      : "#fff",
+                                  color: theme =>
+                                    theme.palette.mode === "dark"
+                                      ? "grey.300"
+                                      : "grey.800",
+                                  border: "1px solid",
+                                  borderColor: theme =>
+                                    theme.palette.mode === "dark"
+                                      ? "grey.800"
+                                      : "grey.300",
+                                  borderRadius: 2,
+                                  fontSize: "0.875rem",
+                                  fontWeight: "700",
+                                }}
+                              >
+                                <code>{`{{${variable}}}`}</code>
+                              </Box>
+                              {" — "} {description}
+                            </ListItem>
+                          ),
+                        )}
+                      </List>
+                    </Collapse>
+                  </Alert>
                   <FormControl fullWidth error={Boolean(bodyError)}>
                     <ReactQuill
                       value={editorContent}

@@ -33,6 +33,7 @@ import {
   mdiFileDocumentMultiple,
   mdiAccountSupervisorCircleOutline,
   mdiAccountPlusOutline,
+  mdiFrequentlyAskedQuestions,
 } from "@mdi/js"
 
 import { requireUser } from "~/session.server"
@@ -310,7 +311,18 @@ export default function DashboardRoute() {
               <ListItemText primary="New asset" />
             </ListItemButton>
           </PendingNavLink>
-          <Divider />
+          <Divider sx={{ my: 1 }} />
+          <PendingNavLink
+            to="/dashboard/faqs"
+            activeClassName={linkActiveClassName}
+          >
+            <ListItemButton>
+              <ListItemIcon>
+                <Icon path={mdiFrequentlyAskedQuestions} size={1} />
+              </ListItemIcon>
+              <ListItemText primary="FAQs" />
+            </ListItemButton>
+          </PendingNavLink>
         </List>
       </Drawer>
       <Box
