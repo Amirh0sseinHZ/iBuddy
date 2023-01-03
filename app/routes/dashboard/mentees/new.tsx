@@ -60,9 +60,12 @@ const schema = z
     notes: z.string().max(2000, "Note cannot be too long").optional(),
     degree: z.enum(["bachelor", "master", "others"]),
     gender: z.enum(["male", "female"]),
-    buddyId: z.string().refine(id => getBuddyById(id as User["id"]), {
-      message: "Buddy does not exist",
-    }),
+    buddyId: Zod.requiredString("Buddy").refine(
+      id => getBuddyById(id as User["id"]),
+      {
+        message: "Buddy does not exist",
+      },
+    ),
   })
   .and(
     z
@@ -278,6 +281,7 @@ export default function NewMenteePage() {
                     label="Buddy"
                     {...register("buddyId")}
                   >
+                    <MenuItem value={18237123}>Fake</MenuItem>
                     {buddyList.map(buddy => (
                       <MenuItem key={buddy.id} value={buddy.id}>
                         {`${buddy.firstName} ${buddy.lastName}`}
