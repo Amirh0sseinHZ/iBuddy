@@ -50,9 +50,17 @@ const schema = z
     firstName: Zod.name("First name"),
     lastName: Zod.name("Last name"),
     country: Zod.country(),
-    email: Zod.email().refine(isEmailUnique, {
-      message: "A mentee with this email address already exists.",
-    }),
+    email: Zod.email().refine(
+      email => {
+        if (!email) {
+          return false
+        }
+        return isEmailUnique(email)
+      },
+      {
+        message: "A mentee with this email address already exists.",
+      },
+    ),
     homeUniversity: Zod.requiredString("Home university"),
     hostFaculty: Zod.requiredString("Home faculty"),
     agreementStartDate: Zod.dateString("Start date"),
@@ -61,7 +69,12 @@ const schema = z
     degree: z.enum(["bachelor", "master", "others"]),
     gender: z.enum(["male", "female"]),
     buddyId: Zod.requiredString("Buddy").refine(
-      id => getBuddyById(id as User["id"]),
+      id => {
+        if (!id) {
+          return false
+        }
+        return getBuddyById(id as User["id"])
+      },
       {
         message: "Buddy does not exist",
       },
@@ -281,7 +294,6 @@ export default function NewMenteePage() {
                     label="Buddy"
                     {...register("buddyId")}
                   >
-                    <MenuItem value={18237123}>Fake</MenuItem>
                     {buddyList.map(buddy => (
                       <MenuItem key={buddy.id} value={buddy.id}>
                         {`${buddy.firstName} ${buddy.lastName}`}
