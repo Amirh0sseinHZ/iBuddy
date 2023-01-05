@@ -50,9 +50,17 @@ const schema = z
     firstName: Zod.name("First name"),
     lastName: Zod.name("Last name"),
     country: Zod.country(),
-    email: Zod.email().refine(isEmailUnique, {
-      message: "A mentee with this email address already exists.",
-    }),
+    email: Zod.email().refine(
+      email => {
+        if (!email) {
+          return false
+        }
+        return isEmailUnique(email)
+      },
+      {
+        message: "A mentee with this email address already exists.",
+      },
+    ),
     homeUniversity: Zod.requiredString("Home university"),
     hostFaculty: Zod.requiredString("Home faculty"),
     agreementStartDate: Zod.dateString("Start date"),
@@ -60,9 +68,17 @@ const schema = z
     notes: z.string().max(2000, "Note cannot be too long").optional(),
     degree: z.enum(["bachelor", "master", "others"]),
     gender: z.enum(["male", "female"]),
-    buddyId: z.string().refine(id => getBuddyById(id as User["id"]), {
-      message: "Buddy does not exist",
-    }),
+    buddyId: Zod.requiredString("Buddy").refine(
+      id => {
+        if (!id) {
+          return false
+        }
+        return getBuddyById(id as User["id"])
+      },
+      {
+        message: "Buddy does not exist",
+      },
+    ),
   })
   .and(
     z

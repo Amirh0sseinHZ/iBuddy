@@ -13,6 +13,7 @@ import {
   MenuItem,
   Typography,
   FormHelperText,
+  Link,
 } from "@mui/material"
 import {
   Form,
@@ -247,5 +248,31 @@ export default function NewUserPage() {
         </PagePaper>
       </Grid>
     </Grid>
+  )
+}
+
+export function ErrorBoundary() {
+  return (
+    <>
+      <Typography variant="h5" gutterBottom>
+        Email Address Not Verified
+      </Typography>
+      <Typography variant="body1" gutterBottom>
+        The user was created but we could not send them an email containing
+        their credentials.
+      </Typography>
+      <Typography variant="body2" gutterBottom>
+        This error happened because you're using sandbox version of Amazon SES,
+        which requires you to verify recipient's email address before you can
+        send them an email. Learn more about this{" "}
+        <Link
+          target="_blank"
+          href="https://docs.aws.amazon.com/ses/latest/DeveloperGuide/request-production-access.html"
+        >
+          here
+        </Link>
+        .
+      </Typography>
+    </>
   )
 }

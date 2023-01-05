@@ -37,6 +37,7 @@ import List from "@mui/material/List"
 import ListItem from "@mui/material/ListItem"
 import Alert from "@mui/material/Alert"
 import AlertTitle from "@mui/material/AlertTitle"
+import Link from "@mui/material/Link"
 import { mdiChevronDown, mdiChevronUp } from "@mdi/js"
 import Icon from "@mdi/react"
 
@@ -405,4 +406,26 @@ function useUpdateQueryStringValueWithoutNavigation(
       .join("?")
     window.history.replaceState(null, "", newUrl)
   }, [queryKey, queryValue])
+}
+
+export function ErrorBoundary() {
+  return (
+    <>
+      <Typography variant="h5" gutterBottom>
+        Email Address Not Verified
+      </Typography>
+      <Typography variant="body1" gutterBottom>
+        This error happened because you're using sandbox version of Amazon SES,
+        which requires you to verify recipient's email address before you can
+        send them an email. Learn more about this{" "}
+        <Link
+          target="_blank"
+          href="https://docs.aws.amazon.com/ses/latest/DeveloperGuide/request-production-access.html"
+        >
+          here
+        </Link>
+        .
+      </Typography>
+    </>
+  )
 }
